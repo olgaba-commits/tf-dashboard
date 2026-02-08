@@ -8,9 +8,9 @@ except Exception:
     HAS_MPL = False
 
 def safe_background_gradient(styler, *args, **kwargs):
-    """Apply background_gradient only if matplotlib is available."""
+    """Apply pandas Styler.background_gradient only if matplotlib is available."""
     if HAS_MPL:
-        return styler.pipe(safe_background_gradient, *args, **kwargs)
+        return styler.background_gradient(*args, **kwargs)
     return styler
 
 import pandas as pd
@@ -31,13 +31,13 @@ st.set_page_config(
 )
 
 
-BUILD_TAG = 'build-2026-02-08-legendfix-v3'
-st.sidebar.caption(f"Build: {BUILD_TAG}")
 # ══════════════════════════════════════════════
 # DARK THEME CSS
 # ══════════════════════════════════════════════
 st.markdown("""
 <style>
+.plot-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:20px;color:#E4E6F0;margin:10px 0 6px 6px;line-height:1.2;}
+.plot-subtitle{font-family:'Outfit',sans-serif;font-weight:500;font-size:12px;color:#8B90AD;margin:-2px 0 10px 6px;}
 /* === GLOBAL === */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -286,7 +286,7 @@ PLOTLY_LAYOUT = dict(
     paper_bgcolor='#131730',
     plot_bgcolor='#131730',
     font=dict(family='Outfit, sans-serif', color='#8B90AD', size=12),
-    margin=dict(l=20, r=20, t=130, b=20),
+    margin=dict(l=20, r=20, t=50, b=20),
     xaxis=dict(gridcolor='rgba(30,34,64,0.25)', zerolinecolor='#1E2240'),
     yaxis=dict(gridcolor='rgba(30,34,64,0.25)', zerolinecolor='#1E2240'),
     legend=dict(
@@ -310,6 +310,11 @@ def apply_layout(fig, title=None, **kwargs):
     layout = {**PLOTLY_LAYOUT, **kwargs}
     fig.update_layout(**layout)
     return fig
+
+
+
+def plot_title(text_: str):
+    st.markdown(f"<div class='plot-title'>{text_}</div>", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════
@@ -647,10 +652,11 @@ with tab_exec:
         plat_data = df.groupby('platform')['ftd_count'].sum().reset_index()
         fig_plat = px.pie(plat_data, values='ftd_count', names='platform', hole=0.65,
                           color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_plat, title='Platform Split (FTD) ✅', showlegend=True)
+        apply_layout(fig_plat, showlegend=True)
+        fig_plat.update_layout(title=None)
+        plot_title('Platform Split (FTD)')
         # Pie charts: keep legend away from the title (vertical legend on the right)
-        fig_plat.update_layout(legend=dict(orientation='v', x=1.02, xanchor='left', y=0.98, yanchor='top'),
-                               margin=dict(l=20, r=160, t=90, b=20))
+        fig_plat.update_layout(legend=dict(orientation='h', x=0, xanchor='left', y=-0.12, yanchor='top'), margin=dict(l=20, r=20, t=30, b=90))
         fig_plat.update_traces(textinfo='percent+label', textfont_size=11)
         st.plotly_chart(fig_plat, width="stretch", config={'displayModeBar': False})
     
@@ -658,10 +664,11 @@ with tab_exec:
         src_data = df.groupby('traffic_source')['registrations'].sum().reset_index().sort_values('registrations', ascending=False)
         fig_src = px.pie(src_data, values='registrations', names='traffic_source', hole=0.65,
                          color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_src, title='Traffic Source (Regs)', showlegend=True)
+        apply_layout(fig_src, showlegend=True)
+        fig_src.update_layout(title=None)
+        plot_title('Traffic Source (Regs)')
         # Pie charts: keep legend away from the title (vertical legend on the right)
-        fig_src.update_layout(legend=dict(orientation='v', x=1.02, xanchor='left', y=0.98, yanchor='top'),
-                              margin=dict(l=20, r=160, t=90, b=20))
+        fig_src.update_layout(legend=dict(orientation='h', x=0, xanchor='left', y=-0.12, yanchor='top'), margin=dict(l=20, r=20, t=30, b=90))
         fig_src.update_traces(textinfo='percent', textfont_size=11)
         st.plotly_chart(fig_src, width="stretch", config={'displayModeBar': False})
     
@@ -669,10 +676,11 @@ with tab_exec:
         geo_data = df.groupby('geo')['ftd_amount_usd'].sum().reset_index().sort_values('ftd_amount_usd', ascending=False)
         fig_geo = px.pie(geo_data, values='ftd_amount_usd', names='geo', hole=0.65,
                          color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_geo, title='GEO (FTD Amount)', showlegend=True)
+        apply_layout(fig_geo, showlegend=True)
+        fig_geo.update_layout(title=None)
+        plot_title('GEO (FTD Amount)')
         # Pie charts: keep legend away from the title (vertical legend on the right)
-        fig_geo.update_layout(legend=dict(orientation='v', x=1.02, xanchor='left', y=0.98, yanchor='top'),
-                              margin=dict(l=20, r=160, t=90, b=20))
+        fig_geo.update_layout(legend=dict(orientation='h', x=0, xanchor='left', y=-0.12, yanchor='top'), margin=dict(l=20, r=20, t=30, b=90))
         fig_geo.update_traces(textinfo='percent+label', textfont_size=11)
         st.plotly_chart(fig_geo, width="stretch", config={'displayModeBar': False})
     
