@@ -5,21 +5,13 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import numpy as np
-import importlib.util
 
-HAS_MPL = importlib.util.find_spec("matplotlib") is not None
-
-def bg(styler, *args, **kwargs):
-    """Safe wrapper for pandas Styler.background_gradient.
-    If matplotlib isn't installed (typical on Streamlit Cloud unless added), just return the Styler without gradient.
-    """
-    if not HAS_MPL:
-        return styler
-    try:
-        return styler.pipe(bg, *args, **kwargs)
-    except Exception:
-        return styler
-
+# Optional dependency: pandas Styler background_gradient needs matplotlib.
+try:
+    import matplotlib  # noqa: F401
+    HAS_MPL = True
+except Exception:
+    HAS_MPL = False
 
 # ══════════════════════════════════════════════
 # CONFIG
@@ -450,13 +442,12 @@ def scorecard_html(label, value, change_pct, sub_text="", accent_color="#5B8DEF"
     """
 
 def kpi_pill_html(label, value, color):
-    return f"""
-    <div class="kpi-pill">
-        <div class="dot" style="background:{color}"></div>
-        {label}
-        <div class="kv">{value}</div>
-    </div>
-    """
+    # IMPORTANT: no leading indentation in HTML, otherwise Streamlit Markdown can render it as a code block.
+    return f"""<div class="kpi-pill">
+<div class="dot" style="background:{color}"></div>
+{label}
+<div class="kv">{value}</div>
+</div>"""
 
 
 # ══════════════════════════════════════════════
@@ -699,7 +690,7 @@ with tab_exec:
     geo_display = geo_table[display_cols].sort_values('FTD_Amount', ascending=False)
     geo_display.columns = ['GEO', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Avg Check $', 'Approval %', 'Net Rev $', 'eCPA $', 'ROI %']
     
-    st.dataframe(
+    geo_styler = (
         geo_display.style
         .format({
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep %': '{:.1f}%',
@@ -707,9 +698,13 @@ with tab_exec:
             'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}',
             'eCPA $': '${:.0f}', 'ROI %': '{:.1f}%'
         })
-        .pipe(bg, subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
-        .pipe(bg, subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95)
-        .pipe(bg, subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50),
+    )
+    if HAS_MPL:
+        geo_styler = geo_styler.background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
+        geo_styler = geo_styler.background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95)
+        geo_styler = geo_styler.background_gradient(subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50)
+    st.dataframe(
+        geo_styler,
         width="stretch",
         hide_index=True,
     )
@@ -758,13 +753,19 @@ with tab_daily:
     display_daily = daily_tbl[['date', 'Day', 'Regs', 'FTD', 'Reg2Dep', 'FTD_Amt', 'Approval', 'Net_Rev']].head(31)
     display_daily.columns = ['Date', 'Day', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Approval %', 'Net Rev $']
     
-    st.dataframe(
+    daily_styler = (
         display_daily.style
         .format({'Date': lambda x: x.strftime('%Y-%m-%d'), 'Regs': '{:,.0f}', 'FTD': '{:,.0f}',
                  'Reg2Dep %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}'})
-        .pipe(bg, subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
-        .pipe(bg, subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95),
-        width="stretch", hide_index=True, height=600,
+    )
+    if HAS_MPL:
+        daily_styler = daily_styler.background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
+        daily_styler = daily_styler.background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95)
+    st.dataframe(
+        daily_styler,
+        width="stretch",
+        hide_index=True,
+        height=600,
     )
     
     # Registration methods breakdown
@@ -827,12 +828,20 @@ with tab_weekly:
     wk_display.columns = ['Week', 'Regs', 'FTD', 'Reg2Dep', 'FTD Amt $', 'Net Rev $', 'eCPA $']
     wk_display = wk_display.sort_values('Week', ascending=False)
     
-    st.dataframe(
-        wk_display.style.format({
+    wk_styler = (
+        wk_display.style
+        .format({
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep': '{:.1%}',
             'FTD Amt $': '${:,.0f}', 'Net Rev $': '${:,.0f}', 'eCPA $': '${:,.0f}'
-        }).pipe(bg, subset=['Reg2Dep'], cmap='RdYlGn', vmin=0, vmax=0.25),
-        width="stretch", hide_index=True, height=500,
+        })
+    )
+    if HAS_MPL:
+        wk_styler = wk_styler.background_gradient(subset=['Reg2Dep'], cmap='RdYlGn', vmin=0, vmax=0.25)
+    st.dataframe(
+        wk_styler,
+        width="stretch",
+        hide_index=True,
+        height=500,
     )
 
 
@@ -905,11 +914,16 @@ with tab_payments:
     cb['cb_rate'] = (cb['cb_count'] / cb['approved'].replace(0, np.nan) * 100).round(2)
     cb = cb.sort_values('cb_rate', ascending=False)
     
-    st.dataframe(
+    cb_styler = (
         cb.rename(columns={'payment_method': 'Method', 'approved': 'Approved Txns', 'cb_count': 'Chargebacks', 'cb_amt': 'CB Amount $', 'cb_rate': 'CB Rate %'})
         .style.format({'Approved Txns': '{:,.0f}', 'Chargebacks': '{:,.0f}', 'CB Amount $': '${:,.0f}', 'CB Rate %': '{:.2f}%'})
-        .pipe(bg, subset=['CB Rate %'], cmap='Reds', vmin=0, vmax=3),
-        width="stretch", hide_index=True,
+    )
+    if HAS_MPL:
+        cb_styler = cb_styler.background_gradient(subset=['CB Rate %'], cmap='Reds', vmin=0, vmax=3)
+    st.dataframe(
+        cb_styler,
+        width="stretch",
+        hide_index=True,
     )
 
 
@@ -946,13 +960,18 @@ with tab_agents:
     ag_display = ag_summary[['agent', 'GEOs', 'Regs', 'FTD', 'Conv_%', 'FTD_Amt', 'Quality', 'Fraud', 'ROI_%']].sort_values('FTD_Amt', ascending=False).head(15)
     ag_display.columns = ['Agent', 'GEOs', 'Regs', 'FTD', 'Conv %', 'FTD Amt $', 'Quality', 'Fraud Flags', 'ROI %']
     
-    st.dataframe(
+    ag_styler = (
         ag_display.style
         .format({'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Conv %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 'Quality': '{:.1f}', 'Fraud Flags': '{:,.0f}', 'ROI %': '{:.1f}%'})
-        .pipe(bg, subset=['Conv %'], cmap='RdYlGn', vmin=0, vmax=15)
-        .pipe(bg, subset=['Quality'], cmap='RdYlGn', vmin=2, vmax=10)
-        .pipe(bg, subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50),
-        width="stretch", hide_index=True,
+    )
+    if HAS_MPL:
+        ag_styler = ag_styler.background_gradient(subset=['Conv %'], cmap='RdYlGn', vmin=0, vmax=15)
+        ag_styler = ag_styler.background_gradient(subset=['Quality'], cmap='RdYlGn', vmin=2, vmax=10)
+        ag_styler = ag_styler.background_gradient(subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50)
+    st.dataframe(
+        ag_styler,
+        width="stretch",
+        hide_index=True,
     )
     
     # Charts
