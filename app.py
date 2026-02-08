@@ -1,17 +1,24 @@
 import streamlit as st
+
+# Optional dependency: matplotlib is required for pandas Styler.background_gradient
+try:
+    import matplotlib  # noqa: F401
+    HAS_MPL = True
+except Exception:
+    HAS_MPL = False
+
+def safe_background_gradient(styler, *args, **kwargs):
+    """Apply background_gradient only if matplotlib is available."""
+    if HAS_MPL:
+        return styler.pipe(safe_background_gradient, *args, **kwargs)
+    return styler
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import numpy as np
-
-# Optional dependency: pandas Styler background_gradient needs matplotlib.
-try:
-    import matplotlib  # noqa: F401
-    HAS_MPL = True
-except Exception:
-    HAS_MPL = False
 
 # ══════════════════════════════════════════════
 # CONFIG
@@ -276,7 +283,6 @@ PLOTLY_LAYOUT = dict(
     paper_bgcolor='#131730',
     plot_bgcolor='#131730',
     font=dict(family='Outfit, sans-serif', color='#8B90AD', size=12),
-    title=dict(text='', x=0.01, xanchor='left', y=1.16, yanchor='top', font=dict(size=16, color='#E4E6F0'), pad=dict(t=0, b=10)),
     margin=dict(l=20, r=20, t=130, b=20),
     xaxis=dict(gridcolor='rgba(30,34,64,0.25)', zerolinecolor='#1E2240'),
     yaxis=dict(gridcolor='rgba(30,34,64,0.25)', zerolinecolor='#1E2240'),
@@ -290,17 +296,16 @@ PLOTLY_LAYOUT = dict(
 )
 
 def apply_layout(fig, title=None, **kwargs):
-    """Apply the global Plotly theme + safely set title without colliding with legend."""
-    layout = {**PLOTLY_LAYOUT, **kwargs}
-    fig.update_layout(**layout)
+    """Apply the global Plotly theme and set title in a stable position."""
     if title is not None:
-        fig.update_layout(title=dict(
+        kwargs['title'] = dict(
             text=title,
             x=0.01, xanchor='left',
             y=1.16, yanchor='top',
             font=dict(size=16, color='#E4E6F0'),
-            pad=dict(t=0, b=10),
-        ))
+        )
+    layout = {**PLOTLY_LAYOUT, **kwargs}
+    fig.update_layout(**layout)
     return fig
 
 
@@ -452,12 +457,13 @@ def scorecard_html(label, value, change_pct, sub_text="", accent_color="#5B8DEF"
     """
 
 def kpi_pill_html(label, value, color):
-    # IMPORTANT: no leading indentation in HTML, otherwise Streamlit Markdown can render it as a code block.
-    return f"""<div class="kpi-pill">
-<div class="dot" style="background:{color}"></div>
-{label}
-<div class="kv">{value}</div>
-</div>"""
+    return f"""
+    <div class="kpi-pill">
+        <div class="dot" style="background:{color}"></div>
+        {label}
+        <div class="kv">{value}</div>
+    </div>
+    """
 
 
 # ══════════════════════════════════════════════
@@ -639,6 +645,9 @@ with tab_exec:
         fig_plat = px.pie(plat_data, values='ftd_count', names='platform', hole=0.65,
                           color_discrete_sequence=COLOR_SEQ)
         apply_layout(fig_plat, title='Platform Split (FTD)', showlegend=True)
+        # Pie charts: keep legend away from the title (vertical legend on the right)
+        fig_plat.update_layout(legend=dict(orientation='v', x=1.02, xanchor='left', y=0.98, yanchor='top'),
+                               margin=dict(l=20, r=160, t=90, b=20))
         fig_plat.update_traces(textinfo='percent+label', textfont_size=11)
         st.plotly_chart(fig_plat, width="stretch", config={'displayModeBar': False})
     
@@ -647,6 +656,9 @@ with tab_exec:
         fig_src = px.pie(src_data, values='registrations', names='traffic_source', hole=0.65,
                          color_discrete_sequence=COLOR_SEQ)
         apply_layout(fig_src, title='Traffic Source (Regs)', showlegend=True)
+        # Pie charts: keep legend away from the title (vertical legend on the right)
+        fig_src.update_layout(legend=dict(orientation='v', x=1.02, xanchor='left', y=0.98, yanchor='top'),
+                              margin=dict(l=20, r=160, t=90, b=20))
         fig_src.update_traces(textinfo='percent', textfont_size=11)
         st.plotly_chart(fig_src, width="stretch", config={'displayModeBar': False})
     
@@ -655,6 +667,9 @@ with tab_exec:
         fig_geo = px.pie(geo_data, values='ftd_amount_usd', names='geo', hole=0.65,
                          color_discrete_sequence=COLOR_SEQ)
         apply_layout(fig_geo, title='GEO (FTD Amount)', showlegend=True)
+        # Pie charts: keep legend away from the title (vertical legend on the right)
+        fig_geo.update_layout(legend=dict(orientation='v', x=1.02, xanchor='left', y=0.98, yanchor='top'),
+                              margin=dict(l=20, r=160, t=90, b=20))
         fig_geo.update_traces(textinfo='percent+label', textfont_size=11)
         st.plotly_chart(fig_geo, width="stretch", config={'displayModeBar': False})
     
@@ -700,7 +715,7 @@ with tab_exec:
     geo_display = geo_table[display_cols].sort_values('FTD_Amount', ascending=False)
     geo_display.columns = ['GEO', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Avg Check $', 'Approval %', 'Net Rev $', 'eCPA $', 'ROI %']
     
-    geo_styler = (
+    st.dataframe(
         geo_display.style
         .format({
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep %': '{:.1f}%',
@@ -708,13 +723,9 @@ with tab_exec:
             'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}',
             'eCPA $': '${:.0f}', 'ROI %': '{:.1f}%'
         })
-    )
-    if HAS_MPL:
-        geo_styler = geo_styler.background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
-        geo_styler = geo_styler.background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95)
-        geo_styler = geo_styler.background_gradient(subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50)
-    st.dataframe(
-        geo_styler,
+        .pipe(safe_background_gradient, subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
+        .pipe(safe_background_gradient, subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95)
+        .pipe(safe_background_gradient, subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50),
         width="stretch",
         hide_index=True,
     )
@@ -763,19 +774,13 @@ with tab_daily:
     display_daily = daily_tbl[['date', 'Day', 'Regs', 'FTD', 'Reg2Dep', 'FTD_Amt', 'Approval', 'Net_Rev']].head(31)
     display_daily.columns = ['Date', 'Day', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Approval %', 'Net Rev $']
     
-    daily_styler = (
+    st.dataframe(
         display_daily.style
         .format({'Date': lambda x: x.strftime('%Y-%m-%d'), 'Regs': '{:,.0f}', 'FTD': '{:,.0f}',
                  'Reg2Dep %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}'})
-    )
-    if HAS_MPL:
-        daily_styler = daily_styler.background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
-        daily_styler = daily_styler.background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95)
-    st.dataframe(
-        daily_styler,
-        width="stretch",
-        hide_index=True,
-        height=600,
+        .pipe(safe_background_gradient, subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
+        .pipe(safe_background_gradient, subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95),
+        width="stretch", hide_index=True, height=600,
     )
     
     # Registration methods breakdown
@@ -838,20 +843,12 @@ with tab_weekly:
     wk_display.columns = ['Week', 'Regs', 'FTD', 'Reg2Dep', 'FTD Amt $', 'Net Rev $', 'eCPA $']
     wk_display = wk_display.sort_values('Week', ascending=False)
     
-    wk_styler = (
-        wk_display.style
-        .format({
+    st.dataframe(
+        wk_display.style.format({
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep': '{:.1%}',
             'FTD Amt $': '${:,.0f}', 'Net Rev $': '${:,.0f}', 'eCPA $': '${:,.0f}'
-        })
-    )
-    if HAS_MPL:
-        wk_styler = wk_styler.background_gradient(subset=['Reg2Dep'], cmap='RdYlGn', vmin=0, vmax=0.25)
-    st.dataframe(
-        wk_styler,
-        width="stretch",
-        hide_index=True,
-        height=500,
+        }).pipe(safe_background_gradient, subset=['Reg2Dep'], cmap='RdYlGn', vmin=0, vmax=0.25),
+        width="stretch", hide_index=True, height=500,
     )
 
 
@@ -924,16 +921,11 @@ with tab_payments:
     cb['cb_rate'] = (cb['cb_count'] / cb['approved'].replace(0, np.nan) * 100).round(2)
     cb = cb.sort_values('cb_rate', ascending=False)
     
-    cb_styler = (
+    st.dataframe(
         cb.rename(columns={'payment_method': 'Method', 'approved': 'Approved Txns', 'cb_count': 'Chargebacks', 'cb_amt': 'CB Amount $', 'cb_rate': 'CB Rate %'})
         .style.format({'Approved Txns': '{:,.0f}', 'Chargebacks': '{:,.0f}', 'CB Amount $': '${:,.0f}', 'CB Rate %': '{:.2f}%'})
-    )
-    if HAS_MPL:
-        cb_styler = cb_styler.background_gradient(subset=['CB Rate %'], cmap='Reds', vmin=0, vmax=3)
-    st.dataframe(
-        cb_styler,
-        width="stretch",
-        hide_index=True,
+        .pipe(safe_background_gradient, subset=['CB Rate %'], cmap='Reds', vmin=0, vmax=3),
+        width="stretch", hide_index=True,
     )
 
 
@@ -970,18 +962,13 @@ with tab_agents:
     ag_display = ag_summary[['agent', 'GEOs', 'Regs', 'FTD', 'Conv_%', 'FTD_Amt', 'Quality', 'Fraud', 'ROI_%']].sort_values('FTD_Amt', ascending=False).head(15)
     ag_display.columns = ['Agent', 'GEOs', 'Regs', 'FTD', 'Conv %', 'FTD Amt $', 'Quality', 'Fraud Flags', 'ROI %']
     
-    ag_styler = (
+    st.dataframe(
         ag_display.style
         .format({'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Conv %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 'Quality': '{:.1f}', 'Fraud Flags': '{:,.0f}', 'ROI %': '{:.1f}%'})
-    )
-    if HAS_MPL:
-        ag_styler = ag_styler.background_gradient(subset=['Conv %'], cmap='RdYlGn', vmin=0, vmax=15)
-        ag_styler = ag_styler.background_gradient(subset=['Quality'], cmap='RdYlGn', vmin=2, vmax=10)
-        ag_styler = ag_styler.background_gradient(subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50)
-    st.dataframe(
-        ag_styler,
-        width="stretch",
-        hide_index=True,
+        .pipe(safe_background_gradient, subset=['Conv %'], cmap='RdYlGn', vmin=0, vmax=15)
+        .pipe(safe_background_gradient, subset=['Quality'], cmap='RdYlGn', vmin=2, vmax=10)
+        .pipe(safe_background_gradient, subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50),
+        width="stretch", hide_index=True,
     )
     
     # Charts
