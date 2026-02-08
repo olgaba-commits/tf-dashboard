@@ -276,14 +276,14 @@ PLOTLY_LAYOUT = dict(
     paper_bgcolor='#131730',
     plot_bgcolor='#131730',
     font=dict(family='Outfit, sans-serif', color='#8B90AD', size=12),
-    title=dict(x=0.01, xanchor='left', y=0.99, yanchor='top', font=dict(size=16, color='#E4E6F0')),
-    margin=dict(l=20, r=20, t=80, b=20),
+    title=dict(text='', x=0.01, xanchor='left', y=1.16, yanchor='top', font=dict(size=16, color='#E4E6F0'), pad=dict(t=0, b=10)),
+    margin=dict(l=20, r=20, t=130, b=20),
     xaxis=dict(gridcolor='rgba(30,34,64,0.25)', zerolinecolor='#1E2240'),
     yaxis=dict(gridcolor='rgba(30,34,64,0.25)', zerolinecolor='#1E2240'),
     legend=dict(
         bgcolor='rgba(0,0,0,0)', borderwidth=0,
         font=dict(size=11, color='#8B90AD'),
-        orientation='h', yanchor='top', y=0.92, xanchor='left', x=0
+        orientation='h', yanchor='top', y=1.06, xanchor='left', x=0
     ),
     colorway=COLOR_SEQ,
     hoverlabel=dict(bgcolor='#1A1E3A', bordercolor='#2A2F55', font_size=12),
@@ -297,8 +297,9 @@ def apply_layout(fig, title=None, **kwargs):
         fig.update_layout(title=dict(
             text=title,
             x=0.01, xanchor='left',
-            y=0.99, yanchor='top',
+            y=1.16, yanchor='top',
             font=dict(size=16, color='#E4E6F0'),
+            pad=dict(t=0, b=10),
         ))
     return fig
 
