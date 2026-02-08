@@ -5,6 +5,21 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import numpy as np
+import importlib.util
+
+HAS_MPL = importlib.util.find_spec("matplotlib") is not None
+
+def bg(styler, *args, **kwargs):
+    """Safe wrapper for pandas Styler.background_gradient.
+    If matplotlib isn't installed (typical on Streamlit Cloud unless added), just return the Styler without gradient.
+    """
+    if not HAS_MPL:
+        return styler
+    try:
+        return styler.pipe(bg, *args, **kwargs)
+    except Exception:
+        return styler
+
 
 # ══════════════════════════════════════════════
 # CONFIG
@@ -598,7 +613,7 @@ with tab_exec:
                 opacity=0.4,
             ))
         apply_layout(fig, title='Registrations & FTD', yaxis2=dict(overlaying='y', side='right', gridcolor='rgba(30,34,64,0.0)'))
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig, width="stretch", config={'displayModeBar': False})
     
     with col_right:
         daily_rev = df.groupby('date').agg(
@@ -612,7 +627,7 @@ with tab_exec:
         fig2.add_trace(go.Bar(x=daily_rev['date'], y=daily_rev['cpa_cost'], name='CPA Cost', marker_color=COLORS['red'], opacity=0.5))
         fig2.add_trace(go.Bar(x=daily_rev['date'], y=daily_rev['bonus_cost'], name='Bonus', marker_color=COLORS['amber'], opacity=0.4))
         apply_layout(fig2, title='Revenue vs Costs', barmode='group')
-        st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig2, width="stretch", config={'displayModeBar': False})
     
     # Breakdown: 3 donuts
     st.markdown('<div class="sec-label">Split Analysis</div>', unsafe_allow_html=True)
@@ -624,7 +639,7 @@ with tab_exec:
                           color_discrete_sequence=COLOR_SEQ)
         apply_layout(fig_plat, title='Platform Split (FTD)', showlegend=True)
         fig_plat.update_traces(textinfo='percent+label', textfont_size=11)
-        st.plotly_chart(fig_plat, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_plat, width="stretch", config={'displayModeBar': False})
     
     with c2:
         src_data = df.groupby('traffic_source')['registrations'].sum().reset_index().sort_values('registrations', ascending=False)
@@ -632,7 +647,7 @@ with tab_exec:
                          color_discrete_sequence=COLOR_SEQ)
         apply_layout(fig_src, title='Traffic Source (Regs)', showlegend=True)
         fig_src.update_traces(textinfo='percent', textfont_size=11)
-        st.plotly_chart(fig_src, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_src, width="stretch", config={'displayModeBar': False})
     
     with c3:
         geo_data = df.groupby('geo')['ftd_amount_usd'].sum().reset_index().sort_values('ftd_amount_usd', ascending=False)
@@ -640,7 +655,7 @@ with tab_exec:
                          color_discrete_sequence=COLOR_SEQ)
         apply_layout(fig_geo, title='GEO (FTD Amount)', showlegend=True)
         fig_geo.update_traces(textinfo='percent+label', textfont_size=11)
-        st.plotly_chart(fig_geo, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_geo, width="stretch", config={'displayModeBar': False})
     
     # Conversion by GEO
     st.markdown('<div class="sec-label">Conversion Deep Dive — Reg2Dep by GEO</div>', unsafe_allow_html=True)
@@ -658,7 +673,7 @@ with tab_exec:
                        color_discrete_sequence=COLOR_SEQ)
     fig_conv.update_traces(mode='lines', line_width=2)
     apply_layout(fig_conv, title='Reg2Dep by GEO — Weekly', yaxis_tickformat='.0%')
-    st.plotly_chart(fig_conv, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig_conv, width="stretch", config={'displayModeBar': False})
     
     # Country table
     st.markdown('<div class="sec-label">Country Performance Matrix</div>', unsafe_allow_html=True)
@@ -692,10 +707,10 @@ with tab_exec:
             'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}',
             'eCPA $': '${:.0f}', 'ROI %': '{:.1f}%'
         })
-        .background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
-        .background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95)
-        .background_gradient(subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50),
-        use_container_width=True,
+        .pipe(bg, subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
+        .pipe(bg, subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95)
+        .pipe(bg, subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50),
+        width="stretch",
         hide_index=True,
     )
 
@@ -747,9 +762,9 @@ with tab_daily:
         display_daily.style
         .format({'Date': lambda x: x.strftime('%Y-%m-%d'), 'Regs': '{:,.0f}', 'FTD': '{:,.0f}',
                  'Reg2Dep %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}'})
-        .background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
-        .background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95),
-        use_container_width=True, hide_index=True, height=600,
+        .pipe(bg, subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
+        .pipe(bg, subset=['Approval %'], cmap='RdYlGn', vmin=60, vmax=95),
+        width="stretch", hide_index=True, height=600,
     )
     
     # Registration methods breakdown
@@ -762,7 +777,7 @@ with tab_daily:
     fig_rm.add_trace(go.Bar(y=reg_methods['reg_method'], x=reg_methods['Regs'], name='Registrations', orientation='h', marker_color=COLORS['blue'], opacity=0.7))
     fig_rm.add_trace(go.Bar(y=reg_methods['reg_method'], x=reg_methods['FTD'], name='FTD', orientation='h', marker_color=COLORS['green'], opacity=0.7))
     apply_layout(fig_rm, title='Registration Methods — Volume & Conversion', barmode='group')
-    st.plotly_chart(fig_rm, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig_rm, width="stretch", config={'displayModeBar': False})
 
 
 # ═══════════════════════════════
@@ -796,7 +811,7 @@ with tab_weekly:
         apply_layout(fig_wv, title='Weekly Volume: Regs & FTD')
         fig_wv.update_yaxes(title_text="Registrations", secondary_y=False)
         fig_wv.update_yaxes(title_text="FTD", secondary_y=True, gridcolor='rgba(30,34,64,0.0)')
-        st.plotly_chart(fig_wv, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_wv, width="stretch", config={'displayModeBar': False})
     
     with col_w2:
         fig_wc = make_subplots(specs=[[{"secondary_y": True}]])
@@ -805,7 +820,7 @@ with tab_weekly:
         apply_layout(fig_wc, title='Reg2Dep vs eCPA — Weekly')
         fig_wc.update_yaxes(title_text="Conversion %", tickformat='.0%', secondary_y=False)
         fig_wc.update_yaxes(title_text="eCPA $", tickprefix='$', secondary_y=True, gridcolor='rgba(30,34,64,0.0)')
-        st.plotly_chart(fig_wc, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_wc, width="stretch", config={'displayModeBar': False})
     
     # Weekly table
     wk_display = wk[['period', 'regs', 'ftd', 'reg2dep', 'ftd_amt', 'net_rev', 'ecpa']].copy()
@@ -816,8 +831,8 @@ with tab_weekly:
         wk_display.style.format({
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep': '{:.1%}',
             'FTD Amt $': '${:,.0f}', 'Net Rev $': '${:,.0f}', 'eCPA $': '${:,.0f}'
-        }).background_gradient(subset=['Reg2Dep'], cmap='RdYlGn', vmin=0, vmax=0.25),
-        use_container_width=True, hide_index=True, height=500,
+        }).pipe(bg, subset=['Reg2Dep'], cmap='RdYlGn', vmin=0, vmax=0.25),
+        width="stretch", hide_index=True, height=500,
     )
 
 
@@ -851,7 +866,7 @@ with tab_payments:
             text=pm_method['approval_rate'].apply(lambda x: f'{x:.0%}'), textposition='auto',
         ))
         apply_layout(fig_pm, title='Approval Rate by Payment Method', xaxis_tickformat='.0%', xaxis_range=[0.5, 1.0])
-        st.plotly_chart(fig_pm, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_pm, width="stretch", config={'displayModeBar': False})
     
     with col_p2:
         pm_geo = pm.groupby('geo').agg(
@@ -862,7 +877,7 @@ with tab_payments:
         fig_pg.add_trace(go.Bar(x=pm_geo['geo'], y=pm_geo['approved'], name='Approved', marker_color=COLORS['green'], opacity=0.7))
         fig_pg.add_trace(go.Bar(x=pm_geo['geo'], y=pm_geo['declined'], name='Declined', marker_color=COLORS['red'], opacity=0.5))
         apply_layout(fig_pg, title='Approved vs Declined by GEO', barmode='stack')
-        st.plotly_chart(fig_pg, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_pg, width="stretch", config={'displayModeBar': False})
     
     # Trend
     pm_trend = pm.groupby(['date', 'geo']).agg(
@@ -880,7 +895,7 @@ with tab_payments:
     fig_pt.add_trace(go.Scatter(x=pm_trend_all['date'], y=pm_trend_all['rate_7d'], name='7d MA', line=dict(color=COLORS['blue'], width=2.5)))
     fig_pt.add_hline(y=0.85, line_dash="dot", line_color=COLORS['green'], annotation_text="Target 85%")
     apply_layout(fig_pt, title='Overall Approval Rate Trend (7d MA)', yaxis_tickformat='.0%')
-    st.plotly_chart(fig_pt, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig_pt, width="stretch", config={'displayModeBar': False})
     
     # Chargeback analysis
     st.markdown('<div class="sec-label">Chargeback Analysis</div>', unsafe_allow_html=True)
@@ -893,8 +908,8 @@ with tab_payments:
     st.dataframe(
         cb.rename(columns={'payment_method': 'Method', 'approved': 'Approved Txns', 'cb_count': 'Chargebacks', 'cb_amt': 'CB Amount $', 'cb_rate': 'CB Rate %'})
         .style.format({'Approved Txns': '{:,.0f}', 'Chargebacks': '{:,.0f}', 'CB Amount $': '${:,.0f}', 'CB Rate %': '{:.2f}%'})
-        .background_gradient(subset=['CB Rate %'], cmap='Reds', vmin=0, vmax=3),
-        use_container_width=True, hide_index=True,
+        .pipe(bg, subset=['CB Rate %'], cmap='Reds', vmin=0, vmax=3),
+        width="stretch", hide_index=True,
     )
 
 
@@ -934,10 +949,10 @@ with tab_agents:
     st.dataframe(
         ag_display.style
         .format({'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Conv %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 'Quality': '{:.1f}', 'Fraud Flags': '{:,.0f}', 'ROI %': '{:.1f}%'})
-        .background_gradient(subset=['Conv %'], cmap='RdYlGn', vmin=0, vmax=15)
-        .background_gradient(subset=['Quality'], cmap='RdYlGn', vmin=2, vmax=10)
-        .background_gradient(subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50),
-        use_container_width=True, hide_index=True,
+        .pipe(bg, subset=['Conv %'], cmap='RdYlGn', vmin=0, vmax=15)
+        .pipe(bg, subset=['Quality'], cmap='RdYlGn', vmin=2, vmax=10)
+        .pipe(bg, subset=['ROI %'], cmap='RdYlGn', vmin=-50, vmax=50),
+        width="stretch", hide_index=True,
     )
     
     # Charts
@@ -951,7 +966,7 @@ with tab_agents:
             hover_name='agent', size_max=40,
         )
         apply_layout(fig_as, title='Agent Quality vs Volume', yaxis_title='Conversion %', xaxis_title='Registrations')
-        st.plotly_chart(fig_as, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_as, width="stretch", config={'displayModeBar': False})
     
     with col_a2:
         # Agent FTD by GEO — top 5
@@ -961,7 +976,7 @@ with tab_agents:
         fig_ag = px.bar(ag_geo, x='agent', y='ftd_count', color='geo',
                         color_discrete_sequence=COLOR_SEQ, barmode='stack')
         apply_layout(fig_ag, title='Top 5 Agents — FTD by GEO')
-        st.plotly_chart(fig_ag, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_ag, width="stretch", config={'displayModeBar': False})
     
     # Fraud alert
     fraud_agents = ag_summary[ag_summary['Fraud'] > ag_summary['Fraud'].quantile(0.9)]
@@ -969,4 +984,4 @@ with tab_agents:
         st.markdown('<div class="sec-label">⚠️ Fraud Risk Agents</div>', unsafe_allow_html=True)
         fraud_display = fraud_agents[['agent', 'GEOs', 'Regs', 'Fraud', 'Quality']].sort_values('Fraud', ascending=False)
         fraud_display.columns = ['Agent', 'GEOs', 'Regs', 'Fraud Flags', 'Quality']
-        st.dataframe(fraud_display.style.format({'Regs': '{:,.0f}', 'Fraud Flags': '{:,.0f}', 'Quality': '{:.1f}'}), use_container_width=True, hide_index=True)
+        st.dataframe(fraud_display.style.format({'Regs': '{:,.0f}', 'Fraud Flags': '{:,.0f}', 'Quality': '{:.1f}'}), width="stretch", hide_index=True)
