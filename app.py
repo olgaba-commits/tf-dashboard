@@ -36,8 +36,6 @@ st.set_page_config(
 # ══════════════════════════════════════════════
 st.markdown("""
 <style>
-.plot-title{font-family:'Outfit',sans-serif;font-weight:700;font-size:20px;color:#E4E6F0;margin:10px 0 6px 6px;line-height:1.2;}
-.plot-subtitle{font-family:'Outfit',sans-serif;font-weight:500;font-size:12px;color:#8B90AD;margin:-2px 0 10px 6px;}
 /* === GLOBAL === */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -159,29 +157,6 @@ section[data-testid="stSidebar"] label {
     margin-top: 4px;
 }
 
-/* === CHART CARD === */
-.chart-card {
-    background: #131730;
-    border: 1px solid #1E2240;
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 14px;
-}
-.chart-card:hover {
-    border-color: #2A2F55;
-}
-.chart-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #E4E6F0;
-    margin-bottom: 2px;
-}
-.chart-subtitle {
-    font-size: 11px;
-    color: #565B7A;
-    margin-bottom: 14px;
-}
-
 /* === ALERT === */
 .alert-banner {
     background: #2D0E0E;
@@ -299,22 +274,28 @@ PLOTLY_LAYOUT = dict(
 )
 
 def apply_layout(fig, title=None, **kwargs):
-    """Apply the global Plotly theme and set title in a stable position."""
-    if title is not None:
-        kwargs['title'] = dict(
+    """
+    Apply the global Plotly theme and set title safely.
+    Fixes overlap issues by adjusting margins dynamically.
+    """
+    layout = PLOTLY_LAYOUT.copy()
+    
+    # Якщо є заголовок, налаштовуємо його і збільшуємо верхній відступ
+    if title:
+        layout['title'] = dict(
             text=title,
             x=0.01, xanchor='left',
-            y=1.16, yanchor='top',
+            y=0.98, yanchor='top', # Позиція всередині контейнера
             font=dict(size=16, color='#E4E6F0'),
         )
-    layout = {**PLOTLY_LAYOUT, **kwargs}
+        # Встановлюємо безпечні відступи (t=60 звільняє місце для заголовка)
+        layout['margin'] = dict(l=20, r=20, t=60, b=20)
+    
+    # Об'єднуємо з переданими аргументами (kwargs мають пріоритет)
+    layout.update(kwargs)
+    
     fig.update_layout(**layout)
     return fig
-
-
-
-def plot_title(text_: str):
-    st.markdown(f"<div class='plot-title'>{text_}</div>", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════
@@ -627,7 +608,11 @@ with tab_exec:
                 name='Prev Regs', line=dict(color=COLORS['blue'], width=1.5, dash='dot'),
                 opacity=0.4,
             ))
-        apply_layout(fig, title='Registrations & FTD', yaxis2=dict(overlaying='y', side='right', gridcolor='rgba(30,34,64,0.0)'))
+        
+        # Виправлено: Легенда більше не перекриває заголовок
+        apply_layout(fig, title='Registrations & FTD', 
+                     yaxis2=dict(overlaying='y', side='right', gridcolor='rgba(30,34,64,0.0)'),
+                     legend=dict(orientation='h', y=1.02, x=0.3))
         st.plotly_chart(fig, width="stretch", config={'displayModeBar': False})
     
     with col_right:
@@ -641,22 +626,29 @@ with tab_exec:
         fig2.add_trace(go.Bar(x=daily_rev['date'], y=daily_rev['net_revenue'], name='Net Revenue', marker_color=COLORS['green'], opacity=0.7))
         fig2.add_trace(go.Bar(x=daily_rev['date'], y=daily_rev['cpa_cost'], name='CPA Cost', marker_color=COLORS['red'], opacity=0.5))
         fig2.add_trace(go.Bar(x=daily_rev['date'], y=daily_rev['bonus_cost'], name='Bonus', marker_color=COLORS['amber'], opacity=0.4))
-        apply_layout(fig2, title='Revenue vs Costs', barmode='group')
+        
+        # Виправлено
+        apply_layout(fig2, title='Revenue vs Costs', barmode='group',
+                     legend=dict(orientation='h', y=1.02, x=0.3))
         st.plotly_chart(fig2, width="stretch", config={'displayModeBar': False})
     
     # Breakdown: 3 donuts
     st.markdown('<div class="sec-label">Split Analysis</div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     
+    # Спільні налаштування для кругових діаграм
+    pie_layout_settings = dict(
+        margin=dict(l=20, r=20, t=60, b=20),
+        legend=dict(orientation='h', x=0.5, xanchor='center', y=-0.1, yanchor='top') # Легенда внизу
+    )
+
     with c1:
         plat_data = df.groupby('platform')['ftd_count'].sum().reset_index()
         fig_plat = px.pie(plat_data, values='ftd_count', names='platform', hole=0.65,
                           color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_plat, showlegend=True)
-        fig_plat.update_layout(title=None)
-        plot_title('Platform Split (FTD)')
-        # Pie charts: keep legend away from the title (vertical legend on the right)
-        fig_plat.update_layout(legend=dict(orientation='h', x=0, xanchor='left', y=-0.12, yanchor='top'), margin=dict(l=20, r=20, t=30, b=90))
+        
+        # Виправлено: Заголовок всередині, легенда знизу
+        apply_layout(fig_plat, title='Platform Split (FTD)', **pie_layout_settings)
         fig_plat.update_traces(textinfo='percent+label', textfont_size=11)
         st.plotly_chart(fig_plat, width="stretch", config={'displayModeBar': False})
     
@@ -664,11 +656,9 @@ with tab_exec:
         src_data = df.groupby('traffic_source')['registrations'].sum().reset_index().sort_values('registrations', ascending=False)
         fig_src = px.pie(src_data, values='registrations', names='traffic_source', hole=0.65,
                          color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_src, showlegend=True)
-        fig_src.update_layout(title=None)
-        plot_title('Traffic Source (Regs)')
-        # Pie charts: keep legend away from the title (vertical legend on the right)
-        fig_src.update_layout(legend=dict(orientation='h', x=0, xanchor='left', y=-0.12, yanchor='top'), margin=dict(l=20, r=20, t=30, b=90))
+        
+        # Виправлено
+        apply_layout(fig_src, title='Traffic Source (Regs)', **pie_layout_settings)
         fig_src.update_traces(textinfo='percent', textfont_size=11)
         st.plotly_chart(fig_src, width="stretch", config={'displayModeBar': False})
     
@@ -676,11 +666,9 @@ with tab_exec:
         geo_data = df.groupby('geo')['ftd_amount_usd'].sum().reset_index().sort_values('ftd_amount_usd', ascending=False)
         fig_geo = px.pie(geo_data, values='ftd_amount_usd', names='geo', hole=0.65,
                          color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_geo, showlegend=True)
-        fig_geo.update_layout(title=None)
-        plot_title('GEO (FTD Amount)')
-        # Pie charts: keep legend away from the title (vertical legend on the right)
-        fig_geo.update_layout(legend=dict(orientation='h', x=0, xanchor='left', y=-0.12, yanchor='top'), margin=dict(l=20, r=20, t=30, b=90))
+        
+        # Виправлено
+        apply_layout(fig_geo, title='GEO (FTD Amount)', **pie_layout_settings)
         fig_geo.update_traces(textinfo='percent+label', textfont_size=11)
         st.plotly_chart(fig_geo, width="stretch", config={'displayModeBar': False})
     
