@@ -270,8 +270,8 @@ PLOTLY_LAYOUT = dict(
     plot_bgcolor='#131730',
     font=dict(family='Outfit, sans-serif', color='#8B90AD', size=12),
     margin=dict(l=20, r=20, t=40, b=20),
-    xaxis=dict(gridcolor='#1E224040', zerolinecolor='#1E2240'),
-    yaxis=dict(gridcolor='#1E224040', zerolinecolor='#1E2240'),
+    xaxis=dict(gridcolor='rgba(30,34,64,0.25)', zerolinecolor='#1E2240'),
+    yaxis=dict(gridcolor='rgba(30,34,64,0.25)', zerolinecolor='#1E2240'),
     legend=dict(
         bgcolor='rgba(0,0,0,0)', borderwidth=0,
         font=dict(size=11, color='#8B90AD'),
@@ -286,42 +286,34 @@ def apply_layout(fig, **kwargs):
     fig.update_layout(**layout)
     return fig
 
+
 # ══════════════════════════════════════════════
 # DATA LOADING
 # ══════════════════════════════════════════════
-from pathlib import Path
-
-DATA_PATH = Path(__file__).resolve().parent / "TF_Dashboard_Dataset_v2.xlsx"
-
 @st.cache_data(ttl=3600)
-def load_data(path: Path = DATA_PATH):
+def load_data():
     """Load all sheets from the dataset."""
-    if not path.exists():
-        raise FileNotFoundError(str(path))
-
-    traffic = pd.read_excel(path, sheet_name="FACT_Daily_Traffic", engine="openpyxl")
-    traffic["date"] = pd.to_datetime(traffic["date"])
-
-    payments = pd.read_excel(path, sheet_name="FACT_Payments", engine="openpyxl")
-    payments["date"] = pd.to_datetime(payments["date"])
-
-    agents = pd.read_excel(path, sheet_name="FACT_Agent_Weekly", engine="openpyxl")
-    agents["week_start"] = pd.to_datetime(agents["week_start"])
-
-    geo_dim = pd.read_excel(path, sheet_name="DIM_Geo", engine="openpyxl")
-
+    path = "TF_Dashboard_Dataset_v2.xlsx"
+    
+    traffic = pd.read_excel(path, sheet_name='FACT_Daily_Traffic')
+    traffic['date'] = pd.to_datetime(traffic['date'])
+    
+    payments = pd.read_excel(path, sheet_name='FACT_Payments')
+    payments['date'] = pd.to_datetime(payments['date'])
+    
+    agents = pd.read_excel(path, sheet_name='FACT_Agent_Weekly')
+    agents['week_start'] = pd.to_datetime(agents['week_start'])
+    
+    geo_dim = pd.read_excel(path, sheet_name='DIM_Geo')
+    
     return traffic, payments, agents, geo_dim
 
 
 try:
     df_traffic, df_payments, df_agents, df_geo = load_data()
 except FileNotFoundError:
-    st.error("⚠️ Файл `TF_Dashboard_Dataset_v2.xlsx` не знайдено поруч із `app.py` (в корені репозиторію).")
+    st.error("⚠️ Файл `TF_Dashboard_Dataset_v2.xlsx` не знайдено. Покладіть його в ту ж папку, що й `app.py`.")
     st.stop()
-except Exception as e:
-    st.error(f"⚠️ Помилка читання Excel: {e}")
-    st.stop()
-
 
 
 # ══════════════════════════════════════════════
@@ -605,7 +597,7 @@ with tab_exec:
                 name='Prev Regs', line=dict(color=COLORS['blue'], width=1.5, dash='dot'),
                 opacity=0.4,
             ))
-        apply_layout(fig, title='Registrations & FTD', yaxis2=dict(overlaying='y', side='right', gridcolor='#1E224000'))
+        apply_layout(fig, title='Registrations & FTD', yaxis2=dict(overlaying='y', side='right', gridcolor='rgba(30,34,64,0.0)'))
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     
     with col_right:
@@ -803,7 +795,7 @@ with tab_weekly:
         fig_wv.add_trace(go.Scatter(x=wk['period'], y=wk['ftd'], name='FTD', line=dict(color=COLORS['green'], width=2.5), mode='lines+markers', marker_size=4), secondary_y=True)
         apply_layout(fig_wv, title='Weekly Volume: Regs & FTD')
         fig_wv.update_yaxes(title_text="Registrations", secondary_y=False)
-        fig_wv.update_yaxes(title_text="FTD", secondary_y=True, gridcolor='#1E224000')
+        fig_wv.update_yaxes(title_text="FTD", secondary_y=True, gridcolor='rgba(30,34,64,0.0)')
         st.plotly_chart(fig_wv, use_container_width=True, config={'displayModeBar': False})
     
     with col_w2:
@@ -812,7 +804,7 @@ with tab_weekly:
         fig_wc.add_trace(go.Scatter(x=wk['period'], y=wk['ecpa'], name='eCPA $', line=dict(color=COLORS['red'], width=2, dash='dot'), mode='lines'), secondary_y=True)
         apply_layout(fig_wc, title='Reg2Dep vs eCPA — Weekly')
         fig_wc.update_yaxes(title_text="Conversion %", tickformat='.0%', secondary_y=False)
-        fig_wc.update_yaxes(title_text="eCPA $", tickprefix='$', secondary_y=True, gridcolor='#1E224000')
+        fig_wc.update_yaxes(title_text="eCPA $", tickprefix='$', secondary_y=True, gridcolor='rgba(30,34,64,0.0)')
         st.plotly_chart(fig_wc, use_container_width=True, config={'displayModeBar': False})
     
     # Weekly table
