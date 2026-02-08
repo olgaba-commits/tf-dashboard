@@ -293,7 +293,18 @@ def apply_layout(fig, **kwargs):
 @st.cache_data(ttl=3600)
 def load_data():
     """Load all sheets from the dataset."""
-    path = "TF_Dashboard_Dataset_v2.xlsx"
+    from pathlib import Path
+
+DATA_PATH = Path(__file__).resolve().parent / "TF_Dashboard_Dataset_v2.xlsx"
+
+# далі в коді:
+path = DATA_PATH
+if not DATA_PATH.exists():
+    st.error("⚠️ Файл `TF_Dashboard_Dataset_v2.xlsx` не знайдено поруч із `app.py`.")
+    st.stop()
+
+df = pd.read_excel(DATA_PATH, sheet_name="...", engine="openpyxl")
+
     
     traffic = pd.read_excel(path, sheet_name='FACT_Daily_Traffic')
     traffic['date'] = pd.to_datetime(traffic['date'])
