@@ -30,6 +30,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
+BUILD_TAG = 'build-2026-02-08-legendfix-v3'
+st.sidebar.caption(f"Build: {BUILD_TAG}")
 # ══════════════════════════════════════════════
 # DARK THEME CSS
 # ══════════════════════════════════════════════
@@ -644,7 +647,7 @@ with tab_exec:
         plat_data = df.groupby('platform')['ftd_count'].sum().reset_index()
         fig_plat = px.pie(plat_data, values='ftd_count', names='platform', hole=0.65,
                           color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_plat, title='Platform Split (FTD)', showlegend=True)
+        apply_layout(fig_plat, title='Platform Split (FTD) ✅', showlegend=True)
         # Pie charts: keep legend away from the title (vertical legend on the right)
         fig_plat.update_layout(legend=dict(orientation='v', x=1.02, xanchor='left', y=0.98, yanchor='top'),
                                margin=dict(l=20, r=160, t=90, b=20))
