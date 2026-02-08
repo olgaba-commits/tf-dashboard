@@ -625,11 +625,14 @@ with tab_exec:
     c1, c2, c3 = st.columns(3)
     
     with c1:
+        st.markdown("<div class='chart-title'>Platform Split (FTD)</div>", unsafe_allow_html=True)
+        st.markdown("<div class='chart-subtitle'>Share of FTD count by platform</div>", unsafe_allow_html=True)
         plat_data = df.groupby('platform')['ftd_count'].sum().reset_index()
         fig_plat = px.pie(plat_data, values='ftd_count', names='platform', hole=0.65,
                           color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_plat, title='Platform Split (FTD)', showlegend=True)
-        fig_plat.update_traces(textinfo='percent+label', textfont_size=11)
+        apply_layout(fig_plat, showlegend=True)
+        fig_plat.update_layout(title=None)
+        fig_plat.update_traces(textinfo='percent+label', textfont_size=11, textposition='inside', insidetextorientation='radial')
         fig_plat.update_layout(
             title=dict(x=0.02, y=0.98, xanchor='left', yanchor='top'),
             legend=dict(orientation='v', y=0.5, yanchor='middle', x=1.02, xanchor='left'),
@@ -638,10 +641,13 @@ with tab_exec:
         st.plotly_chart(fig_plat, width="stretch", config={'displayModeBar': False})
     
     with c2:
+        st.markdown("<div class='chart-title'>Traffic Source (Regs)</div>", unsafe_allow_html=True)
+        st.markdown("<div class='chart-subtitle'>Registrations distribution by traffic source</div>", unsafe_allow_html=True)
         src_data = df.groupby('traffic_source')['registrations'].sum().reset_index().sort_values('registrations', ascending=False)
         fig_src = px.pie(src_data, values='registrations', names='traffic_source', hole=0.65,
                          color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_src, title='Traffic Source (Regs)', showlegend=True)
+        apply_layout(fig_src, showlegend=True)
+        fig_src.update_layout(title=None)
         fig_src.update_traces(textinfo='percent', textfont_size=11)
         fig_src.update_layout(
             title=dict(x=0.02, y=0.98, xanchor='left', yanchor='top'),
@@ -651,11 +657,14 @@ with tab_exec:
         st.plotly_chart(fig_src, width="stretch", config={'displayModeBar': False})
     
     with c3:
+        st.markdown("<div class='chart-title'>GEO (FTD Amount)</div>", unsafe_allow_html=True)
+        st.markdown("<div class='chart-subtitle'>FTD amount distribution by GEO</div>", unsafe_allow_html=True)
         geo_data = df.groupby('geo')['ftd_amount_usd'].sum().reset_index().sort_values('ftd_amount_usd', ascending=False)
         fig_geo = px.pie(geo_data, values='ftd_amount_usd', names='geo', hole=0.65,
                          color_discrete_sequence=COLOR_SEQ)
-        apply_layout(fig_geo, title='GEO (FTD Amount)', showlegend=True)
-        fig_geo.update_traces(textinfo='percent+label', textfont_size=11)
+        apply_layout(fig_geo, showlegend=True)
+        fig_geo.update_layout(title=None)
+        fig_geo.update_traces(textinfo='percent+label', textfont_size=11, textposition='inside', insidetextorientation='radial')
         fig_geo.update_layout(
             title=dict(x=0.02, y=0.98, xanchor='left', yanchor='top'),
             legend=dict(orientation='v', y=0.5, yanchor='middle', x=1.02, xanchor='left'),
