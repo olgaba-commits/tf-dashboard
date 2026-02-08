@@ -286,45 +286,42 @@ def apply_layout(fig, **kwargs):
     fig.update_layout(**layout)
     return fig
 
-
 # ══════════════════════════════════════════════
 # DATA LOADING
 # ══════════════════════════════════════════════
-@st.cache_data(ttl=3600)
-def load_data():
-    """Load all sheets from the dataset."""
-    from pathlib import Path
+from pathlib import Path
 
 DATA_PATH = Path(__file__).resolve().parent / "TF_Dashboard_Dataset_v2.xlsx"
 
-# далі в коді:
-path = DATA_PATH
-if not DATA_PATH.exists():
-    st.error("⚠️ Файл `TF_Dashboard_Dataset_v2.xlsx` не знайдено поруч із `app.py`.")
-    st.stop()
+@st.cache_data(ttl=3600)
+def load_data(path: Path = DATA_PATH):
+    """Load all sheets from the dataset."""
+    if not path.exists():
+        raise FileNotFoundError(str(path))
 
-df = pd.read_excel(DATA_PATH, sheet_name="...", engine="openpyxl")
+    traffic = pd.read_excel(path, sheet_name="FACT_Daily_Traffic", engine="openpyxl")
+    traffic["date"] = pd.to_datetime(traffic["date"])
 
-    
-    traffic = pd.read_excel(path, sheet_name='FACT_Daily_Traffic')
-    traffic['date'] = pd.to_datetime(traffic['date'])
-    
-    payments = pd.read_excel(path, sheet_name='FACT_Payments')
-    payments['date'] = pd.to_datetime(payments['date'])
-    
-    agents = pd.read_excel(path, sheet_name='FACT_Agent_Weekly')
-    agents['week_start'] = pd.to_datetime(agents['week_start'])
-    
-    geo_dim = pd.read_excel(path, sheet_name='DIM_Geo')
-    
+    payments = pd.read_excel(path, sheet_name="FACT_Payments", engine="openpyxl")
+    payments["date"] = pd.to_datetime(payments["date"])
+
+    agents = pd.read_excel(path, sheet_name="FACT_Agent_Weekly", engine="openpyxl")
+    agents["week_start"] = pd.to_datetime(agents["week_start"])
+
+    geo_dim = pd.read_excel(path, sheet_name="DIM_Geo", engine="openpyxl")
+
     return traffic, payments, agents, geo_dim
 
 
 try:
     df_traffic, df_payments, df_agents, df_geo = load_data()
 except FileNotFoundError:
-    st.error("⚠️ Файл `TF_Dashboard_Dataset_v2.xlsx` не знайдено. Покладіть його в ту ж папку, що й `app.py`.")
+    st.error("⚠️ Файл `TF_Dashboard_Dataset_v2.xlsx` не знайдено поруч із `app.py` (в корені репозиторію).")
     st.stop()
+except Exception as e:
+    st.error(f"⚠️ Помилка читання Excel: {e}")
+    st.stop()
+
 
 
 # ══════════════════════════════════════════════
