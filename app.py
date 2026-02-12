@@ -22,10 +22,6 @@ st.set_page_config(
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "dark"  # default
 
-# We'll render sidebar first toggle, then apply CSS based on it.
-# NOTE: We'll re-render CSS after sidebar toggle is set.
-# We'll place toggle in sidebar block below.
-
 # ══════════════════════════════════════════════
 # THEME STYLES (CSS)
 # ══════════════════════════════════════════════
@@ -212,9 +208,14 @@ section[data-testid="stSidebar"] label {
 }
 
 /* === KPI PILLS === */
-.kpi-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.kpi-row { 
+    display: flex; 
+    gap: 10px; 
+    flex-wrap: wrap; 
+    margin-bottom: 16px;
+}
 .kpi-pill {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     background: #131730;
@@ -224,12 +225,18 @@ section[data-testid="stSidebar"] label {
     font-size: 12px;
     color: #8B90AD;
 }
-.kpi-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+.kpi-pill .dot { 
+    width: 8px; 
+    height: 8px; 
+    border-radius: 50%; 
+    flex-shrink: 0;
+}
 .kpi-pill .kv {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 600;
     font-size: 13px;
     color: #E4E6F0;
+    margin-left: 4px;
 }
 
 /* === GENERAL OVERRIDES === */
@@ -452,9 +459,14 @@ section[data-testid="stSidebar"] label {
 }
 
 /* === KPI PILLS === */
-.kpi-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.kpi-row { 
+    display: flex; 
+    gap: 10px; 
+    flex-wrap: wrap; 
+    margin-bottom: 16px;
+}
 .kpi-pill {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     background: #FFFFFF;
@@ -464,12 +476,18 @@ section[data-testid="stSidebar"] label {
     font-size: 12px;
     color: #6B7280;
 }
-.kpi-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+.kpi-pill .dot { 
+    width: 8px; 
+    height: 8px; 
+    border-radius: 50%; 
+    flex-shrink: 0;
+}
 .kpi-pill .kv {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 700;
     font-size: 13px;
     color: #111827;
+    margin-left: 4px;
 }
 
 /* === GENERAL OVERRIDES === */
@@ -728,8 +746,8 @@ def kpi_pill_html(label, value, color):
     return f"""
     <div class="kpi-pill">
         <div class="dot" style="background:{color}"></div>
-        {label}
-        <div class="kv">{value}</div>
+        <span>{label}</span>
+        <span class="kv">{value}</span>
     </div>
     """
 
@@ -835,7 +853,8 @@ with tab_exec:
             st.markdown(scorecard_html(label, value, change, sub, color), unsafe_allow_html=True)
 
     st.markdown('<div class="sec-label">Key Ratios</div>', unsafe_allow_html=True)
-    pills_html = '<div class="kpi-row">'
+    
+    # Build KPI pills HTML properly
     pills_data = [
         ("CTR", fmt_pct(kpi['ctr']), COLORS['blue']),
         ("GGR Margin", fmt_pct(kpi['ggr_margin']), COLORS['green']),
@@ -844,9 +863,12 @@ with tab_exec:
         ("Active Players", fmt_num(kpi['active_players']), COLORS['cyan']),
         ("Sessions/Player", f"{safe_div(kpi['sessions'], kpi['active_players']):.1f}", COLORS['pink']),
     ]
+    
+    pills_html = '<div class="kpi-row">'
     for label, value, color in pills_data:
         pills_html += kpi_pill_html(label, value, color)
     pills_html += '</div>'
+    
     st.markdown(pills_html, unsafe_allow_html=True)
 
     st.markdown('<div class="sec-label">Acquisition Funnel Trends</div>', unsafe_allow_html=True)
@@ -1133,17 +1155,18 @@ with tab_payments:
     reg2dep = safe_div(ftd, regs)
 
     st.markdown('<div class="sec-label">Funnel (Clicks → Reg → Attempt → Approved → FTD)</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="kpi-row">'
-        + kpi_pill_html("Clicks", fmt_num(clicks), COLORS['cyan'])
-        + kpi_pill_html("Registrations", fmt_num(regs), COLORS['blue'])
-        + kpi_pill_html("Click→Reg", fmt_pct(click2reg), COLORS['blue'])
-        + kpi_pill_html("Reg→Attempt", fmt_pct(reg2attempt), COLORS['amber'])
-        + kpi_pill_html("Attempt→Approved", fmt_pct(attempt2approved), COLORS['green'])
-        + kpi_pill_html("Reg→FTD", fmt_pct(reg2dep), COLORS['purple'])
-        + '</div>',
-        unsafe_allow_html=True
-    )
+    
+    # Build funnel pills
+    funnel_pills = '<div class="kpi-row">'
+    funnel_pills += kpi_pill_html("Clicks", fmt_num(clicks), COLORS['cyan'])
+    funnel_pills += kpi_pill_html("Registrations", fmt_num(regs), COLORS['blue'])
+    funnel_pills += kpi_pill_html("Click→Reg", fmt_pct(click2reg), COLORS['blue'])
+    funnel_pills += kpi_pill_html("Reg→Attempt", fmt_pct(reg2attempt), COLORS['amber'])
+    funnel_pills += kpi_pill_html("Attempt→Approved", fmt_pct(attempt2approved), COLORS['green'])
+    funnel_pills += kpi_pill_html("Reg→FTD", fmt_pct(reg2dep), COLORS['purple'])
+    funnel_pills += '</div>'
+    
+    st.markdown(funnel_pills, unsafe_allow_html=True)
 
     st.markdown('<div class="sec-label">Payment Stability (Daily)</div>', unsafe_allow_html=True)
     trend = df.groupby('date', as_index=False).agg(
