@@ -719,6 +719,98 @@ with tab_exec:
         }).background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25),
         use_container_width=True, hide_index=True,
     )
+    
+    # ════════════════════════════════════════════════════════════
+    # ADVANCED BREAKDOWNS
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">🎯 Traffic Quality & Performance Analysis</div>', unsafe_allow_html=True)
+    
+    adv_col1, adv_col2 = st.columns(2)
+    
+    with adv_col1:
+        # Traffic Source Performance with Reg2Dep
+        src_perf = df.groupby('traffic_source').agg(
+            Regs=('registrations', 'sum'),
+            FTD=('ftd_count', 'sum'),
+            Revenue=('net_revenue_usd', 'sum'),
+            CPA=('cpa_cost_usd', 'sum'),
+        ).reset_index()
+        src_perf['Reg2Dep'] = src_perf['FTD'] / src_perf['Regs'].replace(0, np.nan)
+        src_perf['ROI'] = ((src_perf['Revenue'] - src_perf['CPA']) / src_perf['CPA'].replace(0, np.nan))
+        src_perf = src_perf.sort_values('Revenue', ascending=True)
+        
+        fig_src = go.Figure()
+        fig_src.add_trace(go.Bar(
+            y=src_perf['traffic_source'], x=src_perf['Revenue'],
+            name='Net Revenue', orientation='h', marker_color=COLORS['green'],
+            text=src_perf['Reg2Dep'].apply(lambda x: f"{x:.1%}"),
+            textposition='inside', textfont=dict(color='white', size=11),
+        ))
+        
+        apply_layout(fig_src, MODE, title='📡 Traffic Source Performance (Revenue & Reg2Dep %)')
+        st.plotly_chart(fig_src, use_container_width=True, config={'displayModeBar': False})
+    
+    with adv_col2:
+        # Platform + Brand Matrix
+        plat_brand = df.groupby(['platform', 'brand']).agg(
+            FTD=('ftd_count', 'sum'),
+        ).reset_index()
+        
+        fig_pb = px.sunburst(
+            plat_brand, path=['platform', 'brand'], values='FTD',
+            color='FTD', color_continuous_scale='Viridis',
+        )
+        apply_layout(fig_pb, MODE, title='📱🏷️ Platform × Brand Distribution')
+        fig_pb.update_traces(textinfo='label+percent parent')
+        st.plotly_chart(fig_pb, use_container_width=True, config={'displayModeBar': False})
+    
+    # ════════════════════════════════════════════════════════════
+    # CONVERSION FUNNEL SANKEY
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">🎯 Full Conversion Funnel</div>', unsafe_allow_html=True)
+    
+    total_impressions = int(kpi['impressions'])
+    total_clicks = int(kpi['clicks'])
+    total_regs = int(kpi['registrations'])
+    total_attempts = int(df['payment_attempts'].sum())
+    total_approved = int(df['payment_approved'].sum())
+    total_ftd = int(kpi['ftd_count'])
+    
+    # Sankey diagram for funnel
+    fig_sankey = go.Figure(data=[go.Sankey(
+        node=dict(
+            pad=15,
+            thickness=20,
+            line=dict(color="black", width=0.5),
+            label=["Impressions", "Clicks", "Registrations", "Payment Attempts", "Approved", "FTD"],
+            color=[COLORS['cyan'], COLORS['blue'], COLORS['purple'], COLORS['amber'], COLORS['green'], COLORS['green']],
+        ),
+        link=dict(
+            source=[0, 1, 2, 3, 4],
+            target=[1, 2, 3, 4, 5],
+            value=[total_clicks, total_regs, total_attempts, total_approved, total_ftd],
+            color=['rgba(91,141,239,0.3)', 'rgba(155,122,239,0.3)', 'rgba(240,176,90,0.3)', 
+                   'rgba(61,223,160,0.3)', 'rgba(61,223,160,0.5)'],
+        )
+    )])
+    
+    apply_layout(fig_sankey, MODE, title='Conversion Funnel Flow', height=400)
+    st.plotly_chart(fig_sankey, use_container_width=True, config={'displayModeBar': False})
+    
+    # Add funnel metrics below
+    funnel_cols = st.columns(6)
+    funnel_stages = [
+        ("Impressions", fmt_num(total_impressions), "-"),
+        ("Clicks", fmt_num(total_clicks), fmt_pct(safe_div(total_clicks, total_impressions))),
+        ("Regs", fmt_num(total_regs), fmt_pct(safe_div(total_regs, total_clicks))),
+        ("Attempts", fmt_num(total_attempts), fmt_pct(safe_div(total_attempts, total_regs))),
+        ("Approved", fmt_num(total_approved), fmt_pct(safe_div(total_approved, total_attempts))),
+        ("FTD", fmt_num(total_ftd), fmt_pct(safe_div(total_ftd, total_regs))),
+    ]
+    
+    for i, (stage, value, rate) in enumerate(funnel_stages):
+        with funnel_cols[i]:
+            st.metric(stage, value, rate if rate != "-" else None)
 
 # ═══════════════════════════════════════════════════
 # TAB 2: DAILY OPERATIONS
@@ -750,6 +842,97 @@ with tab_daily:
         }).background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25),
         use_container_width=True, hide_index=True, height=600,
     )
+    
+    # ════════════════════════════════════════════════════════════
+    # DAILY CHANGE ANALYSIS - Quick Comparison
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">Daily Change Analysis (vs Previous Day)</div>', unsafe_allow_html=True)
+    
+    # Get latest 2 days
+    today_data = df[df['date'] == df['date'].max()]
+    yesterday_data = df[df['date'] == (df['date'].max() - timedelta(days=1))]
+    
+    today_kpi = compute_kpis(today_data)
+    yesterday_kpi = compute_kpis(yesterday_data)
+    
+    change_cols = st.columns(5)
+    
+    change_metrics = [
+        ("Regs", today_kpi['registrations'], yesterday_kpi['registrations'], False),
+        ("FTD", today_kpi['ftd_count'], yesterday_kpi['ftd_count'], False),
+        ("Reg2Dep", today_kpi['reg2dep'], yesterday_kpi['reg2dep'], False),
+        ("Approval", today_kpi['approval_rate'], yesterday_kpi['approval_rate'], False),
+        ("Revenue", today_kpi['net_revenue'], yesterday_kpi['net_revenue'], False),
+    ]
+    
+    for i, (label, today_val, yesterday_val, is_inverse) in enumerate(change_metrics):
+        with change_cols[i]:
+            if label in ["Reg2Dep", "Approval"]:
+                display_val = fmt_pct(today_val)
+                delta_val = (today_val - yesterday_val) * 100
+                delta_str = f"{delta_val:+.1f}pp"
+            elif label == "Revenue":
+                display_val = fmt_money(today_val)
+                delta_pct = pct_change(today_val, yesterday_val) * 100
+                delta_str = f"{delta_pct:+.1f}%"
+            else:
+                display_val = fmt_num(today_val)
+                delta_pct = pct_change(today_val, yesterday_val) * 100
+                delta_str = f"{delta_pct:+.1f}%"
+            
+            st.metric(label, display_val, delta_str)
+    
+    # ════════════════════════════════════════════════════════════
+    # PLATFORM & REGISTRATION ANALYSIS
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">📱 Platform & 📝 Registration Deep Dive</div>', unsafe_allow_html=True)
+    
+    col_p1, col_p2 = st.columns(2)
+    
+    with col_p1:
+        # Platform Comparison - Regs vs FTD
+        plat_agg = df.groupby('platform').agg(
+            Regs=('registrations', 'sum'),
+            FTD=('ftd_count', 'sum'),
+            Revenue=('net_revenue_usd', 'sum'),
+        ).reset_index()
+        
+        fig_plat = go.Figure()
+        fig_plat.add_trace(go.Bar(
+            x=plat_agg['platform'], y=plat_agg['Regs'],
+            name='Registrations', marker_color=COLORS['blue'], opacity=0.7
+        ))
+        fig_plat.add_trace(go.Bar(
+            x=plat_agg['platform'], y=plat_agg['FTD'],
+            name='FTD', marker_color=COLORS['green'], yaxis='y2'
+        ))
+        
+        apply_layout(fig_plat, MODE, title='📱 Platform Comparison: Regs vs FTD')
+        fig_plat.update_layout(
+            yaxis=dict(title="Registrations"),
+            yaxis2=dict(title="FTD", overlaying='y', side='right')
+        )
+        st.plotly_chart(fig_plat, use_container_width=True, config={'displayModeBar': False})
+    
+    with col_p2:
+        # Registration Methods - Regs vs FTD
+        reg_method_agg = df.groupby('reg_method').agg(
+            Regs=('registrations', 'sum'),
+            FTD=('ftd_count', 'sum'),
+        ).reset_index().sort_values('Regs', ascending=True)
+        
+        fig_rm = go.Figure()
+        fig_rm.add_trace(go.Bar(
+            y=reg_method_agg['reg_method'], x=reg_method_agg['Regs'],
+            name='Registrations', orientation='h', marker_color=COLORS['blue'], opacity=0.7
+        ))
+        fig_rm.add_trace(go.Bar(
+            y=reg_method_agg['reg_method'], x=reg_method_agg['FTD'],
+            name='FTD', orientation='h', marker_color=COLORS['green']
+        ))
+        
+        apply_layout(fig_rm, MODE, title='📝 Registration Methods: Volume & Conversion', barmode='group')
+        st.plotly_chart(fig_rm, use_container_width=True, config={'displayModeBar': False})
 
 # ═══════════════════════════════════════════════════
 # TAB 3: WEEKLY TRENDS
