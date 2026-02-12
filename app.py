@@ -241,33 +241,27 @@ COLORS = {
 }
 COLOR_SEQ = list(COLORS.values())
 
-def plotly_layout(mode: str):
+def apply_layout(fig, mode: str, **kwargs):
     if mode == "dark":
-        return dict(
+        fig.update_layout(
             template='plotly_dark',
             paper_bgcolor='#131730',
             plot_bgcolor='#131730',
             font=dict(family='Outfit, sans-serif', color='#8B90AD', size=12),
             margin=dict(l=20, r=20, t=40, b=20),
-            xaxis=dict(gridcolor='#1E224040', zerolinecolor='#1E2240'),
-            yaxis=dict(gridcolor='#1E224040', zerolinecolor='#1E2240'),
-            legend=dict(bgcolor='rgba(0,0,0,0)', borderwidth=0, font=dict(size=11, color='#8B90AD')),
             colorway=COLOR_SEQ,
+            **kwargs
         )
     else:
-        return dict(
+        fig.update_layout(
             template='plotly_white',
             paper_bgcolor='#FFFFFF',
             plot_bgcolor='#FFFFFF',
             font=dict(family='Outfit, sans-serif', color='#374151', size=12),
             margin=dict(l=20, r=20, t=40, b=20),
             colorway=COLOR_SEQ,
+            **kwargs
         )
-
-def apply_layout(fig, mode: str, **kwargs):
-    base = plotly_layout(mode)
-    layout = {**base, **kwargs}
-    fig.update_layout(**layout)
     return fig
 
 # ══════════════════════════════════════════════
