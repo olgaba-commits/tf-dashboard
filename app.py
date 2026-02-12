@@ -818,11 +818,11 @@ with tab_exec:
 # TAB 2: DAILY OPERATIONS
 # ═══════════════════════════════════════════════════
 with tab_daily:
-    st.markdown('<div class="sec-label">Daily Operations — Today vs Yesterday</div>', unsafe_allow_html=True)
+    # ════════════════════════════════════════════════════════════
+    # TODAY vs YESTERDAY KPI COMPARISON (FIRST!)
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">Daily Change Analysis (vs Previous Day)</div>', unsafe_allow_html=True)
     
-    # ════════════════════════════════════════════════════════════
-    # TODAY vs YESTERDAY KPI COMPARISON
-    # ════════════════════════════════════════════════════════════
     today_date = df['date'].max()
     yesterday_date = today_date - timedelta(days=1)
     
@@ -832,7 +832,7 @@ with tab_daily:
     today_kpi = compute_kpis(today_data)
     yesterday_kpi = compute_kpis(yesterday_data)
     
-    st.markdown(f"### 📅 Today ({today_date.strftime('%Y-%m-%d')}) vs Yesterday ({yesterday_date.strftime('%Y-%m-%d')})")
+    st.markdown(f"**Today ({today_date.strftime('%Y-%m-%d')})** vs **Yesterday ({yesterday_date.strftime('%Y-%m-%d')})**")
     
     kpi_cols = st.columns(6)
     
@@ -999,9 +999,9 @@ with tab_daily:
         st.plotly_chart(fig_geo, use_container_width=True, config={'displayModeBar': False})
     
     # ════════════════════════════════════════════════════════════
-    # DAILY DATA TABLE
+    # DAILY OPERATIONS TABLE (AT THE END!)
     # ════════════════════════════════════════════════════════════
-    st.markdown('<div class="sec-label">📊 Daily Performance Table</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sec-label">Daily Operations — Performance Table</div>', unsafe_allow_html=True)
     
     daily_tbl = df.groupby('date').agg(
         Regs=('registrations', 'sum'),
@@ -1029,6 +1029,7 @@ with tab_daily:
          .background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=50, vmax=95),
         use_container_width=True, hide_index=True, height=500,
     )
+
 
         ftd=('ftd_count', 'sum'),
         ftd_amt=('ftd_amount_usd', 'sum'),
