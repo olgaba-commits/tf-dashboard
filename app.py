@@ -460,60 +460,61 @@ with tab_exec:
     # ════════════════════════════════════════════════════════════
     alerts = []
     
-    # Alert 1: Reg2Dep Drop (Conversion Crisis)
+    # Alert 1: Reg2Dep Drop (Conversion Optimization Opportunity)
     reg2dep_drop = kpi['reg2dep'] - kpi_prev['reg2dep']
     if reg2dep_drop < -0.02:  # Drop more than 2pp
         lost_ftd = abs(reg2dep_drop) * kpi['registrations']
         revenue_impact = lost_ftd * kpi['avg_ftd_check']
         alerts.append({
             'type': 'critical',
-            'icon': '🔴',
-            'title': 'CRITICAL: Conversion Rate Collapse',
-            'message': f"Reg2Dep упала з **{kpi_prev['reg2dep']*100:.1f}%** до **{kpi['reg2dep']*100:.1f}%** (−{abs(reg2dep_drop)*100:.1f}pp)",
-            'impact': f"Втрачено **~{int(lost_ftd)} FTD** • Estimated revenue loss: **{fmt_money(revenue_impact)}**",
-            'recommendation': '→ Перевірте payment gateway stability, оновлення на сайті, та якість трафіку'
+            'icon': '📊',
+            'title': 'Conversion Rate Needs Attention',
+            'message': f"Reg2Dep знизився з **{kpi_prev['reg2dep']*100:.1f}%** до **{kpi['reg2dep']*100:.1f}%** (−{abs(reg2dep_drop)*100:.1f}pp)",
+            'impact': f"Потенціал для покращення: **~{int(lost_ftd)} FTD** • Revenue opportunity: **{fmt_money(revenue_impact)}**",
+            'recommendation': 'Рекомендації: перевірте user journey, payment flow stability, та якість incoming traffic'
         })
     
-    # Alert 2: Approval Rate Drop (Payment Issues)
+    # Alert 2: Approval Rate Drop (Payment Optimization)
     approval_drop = kpi['approval_rate'] - kpi_prev['approval_rate']
     if approval_drop < -0.05:  # Drop more than 5pp
         lost_approvals = abs(approval_drop) * kpi['registrations'] * kpi_prev['reg2dep']
         revenue_impact = lost_approvals * kpi['avg_ftd_check']
         alerts.append({
             'type': 'warning',
-            'icon': '⚠️',
-            'title': 'WARNING: Payment Approval Rate Deteriorating',
-            'message': f"Approval rate впав з **{kpi_prev['approval_rate']*100:.1f}%** до **{kpi['approval_rate']*100:.1f}%** (−{abs(approval_drop)*100:.1f}pp)",
-            'impact': f"Estimated lost deposits: **~{int(lost_approvals)}** • Revenue impact: **{fmt_money(revenue_impact)}**",
-            'recommendation': '→ Негайно перевірте PSP status, fraud filters, та declined transactions breakdown'
+            'icon': '💳',
+            'title': 'Payment Success Rate Declined',
+            'message': f"Approval rate змінився: **{kpi_prev['approval_rate']*100:.1f}%** → **{kpi['approval_rate']*100:.1f}%** (−{abs(approval_drop)*100:.1f}pp)",
+            'impact': f"Можлива оптимізація: **~{int(lost_approvals)}** deposits • Potential gain: **{fmt_money(revenue_impact)}**",
+            'recommendation': 'Варто перевірити: PSP performance, fraud rules configuration, та declined transaction patterns'
         })
     
-    # Alert 3: CPA Efficiency (Cost Spike)
+    # Alert 3: CPA Efficiency (Cost Optimization Opportunity)
     cpa_increase = (kpi['effective_cpa'] - kpi_prev['effective_cpa']) / kpi_prev['effective_cpa'] if kpi_prev['effective_cpa'] > 0 else 0
     if cpa_increase > 0.20:  # 20% increase
         extra_cost = (kpi['effective_cpa'] - kpi_prev['effective_cpa']) * kpi['ftd_count']
         alerts.append({
             'type': 'warning',
-            'icon': '💸',
-            'title': 'WARNING: CPA Spike Detected',
-            'message': f"eCPA зріс з **{fmt_money(kpi_prev['effective_cpa'])}** до **{fmt_money(kpi['effective_cpa'])}** (+{cpa_increase*100:.1f}%)",
-            'impact': f"Додаткові витрати: **{fmt_money(extra_cost)}** за період",
-            'recommendation': '→ Оптимізуйте bid strategy, pause underperforming campaigns, перевірте targeting quality'
+            'icon': '💡',
+            'title': 'Media Buying Efficiency Opportunity',
+            'message': f"eCPA збільшився: **{fmt_money(kpi_prev['effective_cpa'])}** → **{fmt_money(kpi['effective_cpa'])}** (+{cpa_increase*100:.1f}%)",
+            'impact': f"Потенціал економії: **{fmt_money(extra_cost)}** за період",
+            'recommendation': 'Можливі дії: оптимізація bid strategy, review campaign performance, A/B test креативів'
         })
     
-    # Alert 4: ROI Negative Territory
+    # Alert 4: ROI Below Target (Profitability Focus)
     if kpi['roi'] < -0.20:  # ROI below -20%
         total_loss = kpi['margin']
+        break_even_needed = abs(total_loss) / (kpi['ftd_count'] if kpi['ftd_count'] > 0 else 1)
         alerts.append({
             'type': 'critical',
-            'icon': '💀',
-            'title': 'CRITICAL: Negative ROI Territory',
-            'message': f"ROI на рівні **{kpi['roi']*100:.1f}%** — бізнес втрачає гроші",
-            'impact': f"Загальний збиток за період: **{fmt_money(abs(total_loss))}**",
-            'recommendation': '→ НЕГАЙНО: pause unprofitable traffic sources, підвищіть retention, зменшіть bonus abuse'
+            'icon': '📈',
+            'title': 'ROI Below Target - Action Plan Needed',
+            'message': f"Поточний ROI: **{kpi['roi']*100:.1f}%** — є простір для оптимізації",
+            'impact': f"Gap to break-even: **{fmt_money(abs(total_loss))}** • Need ~**{fmt_money(break_even_needed)}** more per FTD",
+            'recommendation': 'Фокус на: retention programs, reduce bonus abuse, optimize traffic mix, improve LTV'
         })
     
-    # Alert 5: Registration Volume Drop (Traffic Issues)
+    # Alert 5: Registration Volume Drop (Growth Opportunity)
     reg_drop = (kpi['registrations'] - kpi_prev['registrations']) / kpi_prev['registrations'] if kpi_prev['registrations'] > 0 else 0
     if reg_drop < -0.15:  # 15% drop
         lost_regs = abs(kpi['registrations'] - kpi_prev['registrations'])
@@ -521,24 +522,24 @@ with tab_exec:
         revenue_impact = potential_ftd * kpi['avg_ftd_check']
         alerts.append({
             'type': 'warning',
-            'icon': '📉',
-            'title': 'WARNING: Registration Volume Decline',
-            'message': f"Реєстрації впали на **{abs(reg_drop)*100:.1f}%** ({fmt_num(kpi_prev['registrations'])} → {fmt_num(kpi['registrations'])})",
-            'impact': f"Втрачено **~{int(potential_ftd)} FTD** • Revenue opportunity loss: **{fmt_money(revenue_impact)}**",
-            'recommendation': '→ Перевірте media buying budget, ad account status, сезонність, конкурентні акції'
+            'icon': '🎯',
+            'title': 'Traffic Volume Growth Opportunity',
+            'message': f"Реєстрації: **{fmt_num(kpi_prev['registrations'])}** → **{fmt_num(kpi['registrations'])}** (−{abs(reg_drop)*100:.1f}%)",
+            'impact': f"Opportunity: **~{int(potential_ftd)} FTD** • Revenue potential: **{fmt_money(revenue_impact)}**",
+            'recommendation': 'Розгляньте: збільшення media spend, нові traffic sources, seasonal adjustments, competitor analysis'
         })
     
-    # Alert 6: Positive Alert - Performance Improvement
+    # Alert 6: Positive Alert - Performance Win
     if reg2dep_drop > 0.02 and kpi['reg2dep'] > 0.15:
         extra_ftd = reg2dep_drop * kpi['registrations']
         revenue_gain = extra_ftd * kpi['avg_ftd_check']
         alerts.append({
             'type': 'success',
-            'icon': '🎯',
-            'title': 'SUCCESS: Conversion Rate Improving',
-            'message': f"Reg2Dep зріс з **{kpi_prev['reg2dep']*100:.1f}%** до **{kpi['reg2dep']*100:.1f}%** (+{reg2dep_drop*100:.1f}pp)",
-            'impact': f"Додатково здобуто **~{int(extra_ftd)} FTD** • Extra revenue: **{fmt_money(revenue_gain)}**",
-            'recommendation': '→ Проаналізуйте що спрацювало: масштабуйте успішні креативи, оффери, GEO'
+            'icon': '✨',
+            'title': 'Great Performance - Conversion Improving',
+            'message': f"Reg2Dep покращився: **{kpi_prev['reg2dep']*100:.1f}%** → **{kpi['reg2dep']*100:.1f}%** (+{reg2dep_drop*100:.1f}pp)",
+            'impact': f"Додатковий результат: **~{int(extra_ftd)} FTD** • Extra revenue: **{fmt_money(revenue_gain)}**",
+            'recommendation': 'Наступні кроки: документуйте що спрацювало, масштабуйте успішні кампанії та креативи'
         })
     
     # Display alerts if any exist
