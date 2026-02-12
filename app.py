@@ -455,6 +455,159 @@ with tab_exec:
         with cols[i]:
             st.markdown(scorecard_html(label, value, change, sub, color), unsafe_allow_html=True)
 
+    # ════════════════════════════════════════════════════════════
+    # INTELLIGENT ALERTS - Business Impact Analysis
+    # ════════════════════════════════════════════════════════════
+    alerts = []
+    
+    # Alert 1: Reg2Dep Drop (Conversion Crisis)
+    reg2dep_drop = kpi['reg2dep'] - kpi_prev['reg2dep']
+    if reg2dep_drop < -0.02:  # Drop more than 2pp
+        lost_ftd = abs(reg2dep_drop) * kpi['registrations']
+        revenue_impact = lost_ftd * kpi['avg_ftd_check']
+        alerts.append({
+            'type': 'critical',
+            'icon': '🔴',
+            'title': 'CRITICAL: Conversion Rate Collapse',
+            'message': f"Reg2Dep упала з **{kpi_prev['reg2dep']*100:.1f}%** до **{kpi['reg2dep']*100:.1f}%** (−{abs(reg2dep_drop)*100:.1f}pp)",
+            'impact': f"Втрачено **~{int(lost_ftd)} FTD** • Estimated revenue loss: **{fmt_money(revenue_impact)}**",
+            'recommendation': '→ Перевірте payment gateway stability, оновлення на сайті, та якість трафіку'
+        })
+    
+    # Alert 2: Approval Rate Drop (Payment Issues)
+    approval_drop = kpi['approval_rate'] - kpi_prev['approval_rate']
+    if approval_drop < -0.05:  # Drop more than 5pp
+        lost_approvals = abs(approval_drop) * kpi['registrations'] * kpi_prev['reg2dep']
+        revenue_impact = lost_approvals * kpi['avg_ftd_check']
+        alerts.append({
+            'type': 'warning',
+            'icon': '⚠️',
+            'title': 'WARNING: Payment Approval Rate Deteriorating',
+            'message': f"Approval rate впав з **{kpi_prev['approval_rate']*100:.1f}%** до **{kpi['approval_rate']*100:.1f}%** (−{abs(approval_drop)*100:.1f}pp)",
+            'impact': f"Estimated lost deposits: **~{int(lost_approvals)}** • Revenue impact: **{fmt_money(revenue_impact)}**",
+            'recommendation': '→ Негайно перевірте PSP status, fraud filters, та declined transactions breakdown'
+        })
+    
+    # Alert 3: CPA Efficiency (Cost Spike)
+    cpa_increase = (kpi['effective_cpa'] - kpi_prev['effective_cpa']) / kpi_prev['effective_cpa'] if kpi_prev['effective_cpa'] > 0 else 0
+    if cpa_increase > 0.20:  # 20% increase
+        extra_cost = (kpi['effective_cpa'] - kpi_prev['effective_cpa']) * kpi['ftd_count']
+        alerts.append({
+            'type': 'warning',
+            'icon': '💸',
+            'title': 'WARNING: CPA Spike Detected',
+            'message': f"eCPA зріс з **{fmt_money(kpi_prev['effective_cpa'])}** до **{fmt_money(kpi['effective_cpa'])}** (+{cpa_increase*100:.1f}%)",
+            'impact': f"Додаткові витрати: **{fmt_money(extra_cost)}** за період",
+            'recommendation': '→ Оптимізуйте bid strategy, pause underperforming campaigns, перевірте targeting quality'
+        })
+    
+    # Alert 4: ROI Negative Territory
+    if kpi['roi'] < -0.20:  # ROI below -20%
+        total_loss = kpi['margin']
+        alerts.append({
+            'type': 'critical',
+            'icon': '💀',
+            'title': 'CRITICAL: Negative ROI Territory',
+            'message': f"ROI на рівні **{kpi['roi']*100:.1f}%** — бізнес втрачає гроші",
+            'impact': f"Загальний збиток за період: **{fmt_money(abs(total_loss))}**",
+            'recommendation': '→ НЕГАЙНО: pause unprofitable traffic sources, підвищіть retention, зменшіть bonus abuse'
+        })
+    
+    # Alert 5: Registration Volume Drop (Traffic Issues)
+    reg_drop = (kpi['registrations'] - kpi_prev['registrations']) / kpi_prev['registrations'] if kpi_prev['registrations'] > 0 else 0
+    if reg_drop < -0.15:  # 15% drop
+        lost_regs = abs(kpi['registrations'] - kpi_prev['registrations'])
+        potential_ftd = lost_regs * kpi_prev['reg2dep']
+        revenue_impact = potential_ftd * kpi['avg_ftd_check']
+        alerts.append({
+            'type': 'warning',
+            'icon': '📉',
+            'title': 'WARNING: Registration Volume Decline',
+            'message': f"Реєстрації впали на **{abs(reg_drop)*100:.1f}%** ({fmt_num(kpi_prev['registrations'])} → {fmt_num(kpi['registrations'])})",
+            'impact': f"Втрачено **~{int(potential_ftd)} FTD** • Revenue opportunity loss: **{fmt_money(revenue_impact)}**",
+            'recommendation': '→ Перевірте media buying budget, ad account status, сезонність, конкурентні акції'
+        })
+    
+    # Alert 6: Positive Alert - Performance Improvement
+    if reg2dep_drop > 0.02 and kpi['reg2dep'] > 0.15:
+        extra_ftd = reg2dep_drop * kpi['registrations']
+        revenue_gain = extra_ftd * kpi['avg_ftd_check']
+        alerts.append({
+            'type': 'success',
+            'icon': '🎯',
+            'title': 'SUCCESS: Conversion Rate Improving',
+            'message': f"Reg2Dep зріс з **{kpi_prev['reg2dep']*100:.1f}%** до **{kpi['reg2dep']*100:.1f}%** (+{reg2dep_drop*100:.1f}pp)",
+            'impact': f"Додатково здобуто **~{int(extra_ftd)} FTD** • Extra revenue: **{fmt_money(revenue_gain)}**",
+            'recommendation': '→ Проаналізуйте що спрацювало: масштабуйте успішні креативи, оффери, GEO'
+        })
+    
+    # Display alerts if any exist
+    if alerts:
+        st.markdown('<div style="margin: 20px 0"></div>', unsafe_allow_html=True)
+        
+        # Sort: critical first, then warning, then success
+        alert_priority = {'critical': 0, 'warning': 1, 'success': 2}
+        alerts.sort(key=lambda x: alert_priority[x['type']])
+        
+        for alert in alerts:
+            if alert['type'] == 'critical':
+                bg_color = '#2D0E0E' if MODE == 'dark' else '#FEF2F2'
+                border_color = '#F06A6A30' if MODE == 'dark' else '#FECACA'
+                text_color = '#F06A6A' if MODE == 'dark' else '#B42318'
+            elif alert['type'] == 'warning':
+                bg_color = '#2D1F0E' if MODE == 'dark' else '#FFFBEB'
+                border_color = '#F0B05A30' if MODE == 'dark' else '#FDE68A'
+                text_color = '#F0B05A' if MODE == 'dark' else '#D97706'
+            else:  # success
+                bg_color = '#0E2D20' if MODE == 'dark' else '#F0FDF4'
+                border_color = '#3DDFA030' if MODE == 'dark' else '#BBF7D0'
+                text_color = '#3DDFA0' if MODE == 'dark' else '#15803D'
+            
+            st.markdown(f"""
+            <div style="
+                background: {bg_color};
+                border: 1px solid {border_color};
+                border-left: 4px solid {text_color};
+                border-radius: 10px;
+                padding: 16px 20px;
+                margin-bottom: 12px;
+                font-size: 13px;
+            ">
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <span style="font-size: 24px; line-height: 1;">{alert['icon']}</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: {text_color}; margin-bottom: 6px; font-size: 14px;">
+                            {alert['title']}
+                        </div>
+                        <div style="margin-bottom: 8px; line-height: 1.5;">
+                            {alert['message']}
+                        </div>
+                        <div style="
+                            font-family: 'JetBrains Mono', monospace;
+                            font-weight: 600;
+                            color: {text_color};
+                            margin-bottom: 8px;
+                            font-size: 13px;
+                            padding: 8px 12px;
+                            background: {'rgba(240,106,106,0.1)' if alert['type'] == 'critical' else 'rgba(240,176,90,0.1)' if alert['type'] == 'warning' else 'rgba(61,223,160,0.1)'};
+                            border-radius: 6px;
+                        ">
+                            💰 {alert['impact']}
+                        </div>
+                        <div style="
+                            font-size: 12px;
+                            color: {'#8B90AD' if MODE == 'dark' else '#6B7280'};
+                            font-style: italic;
+                            padding-left: 12px;
+                            border-left: 2px solid {border_color};
+                        ">
+                            {alert['recommendation']}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
     st.markdown('<div class="sec-label">Key Ratios</div>', unsafe_allow_html=True)
     
     # Using native Streamlit metrics
