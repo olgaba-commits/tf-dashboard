@@ -108,7 +108,6 @@ section[data-testid="stSidebar"] {
     border-bottom: 1px solid #1E2240;
 }
 
-/* Native Streamlit metrics styling */
 div[data-testid="stMetric"] {
     background: #131730;
     border: 1px solid #1E2240;
@@ -129,10 +128,6 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     color: #E4E6F0;
     font-size: 20px;
     font-weight: 600;
-}
-
-div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
-    font-size: 12px;
 }
 
 .stTabs [data-baseweb="tab-list"] {
@@ -468,7 +463,7 @@ with tab_exec:
 
     st.markdown('<div class="sec-label">Key Ratios</div>', unsafe_allow_html=True)
     
-    # Using native Streamlit metrics instead of HTML pills
+    # Using native Streamlit metrics
     metric_cols = st.columns(6)
     metrics_data = [
         ("CTR", fmt_pct(kpi['ctr'])),
@@ -493,19 +488,19 @@ with tab_exec:
             ftd_count=('ftd_count', 'sum'),
         ).reset_index()
 
-        fig = go.Figure()
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
         fig.add_trace(go.Scatter(
             x=daily['date'], y=daily['registrations'],
             name='Registrations', line=dict(color=COLORS['blue'], width=2),
             fill='tozeroy', fillcolor='rgba(91,141,239,0.05)',
-        ))
+        ), secondary_y=False)
         fig.add_trace(go.Scatter(
             x=daily['date'], y=daily['ftd_count'],
             name='FTD', line=dict(color=COLORS['green'], width=2),
-            yaxis='y2',
-        ))
-        apply_layout(fig, MODE, title='Registrations & FTD',
-                     yaxis2=dict(overlaying='y', side='right'))
+        ), secondary_y=True)
+        apply_layout(fig, MODE, title='Registrations & FTD')
+        fig.update_yaxes(title_text="Registrations", secondary_y=False)
+        fig.update_yaxes(title_text="FTD", secondary_y=True)
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     with col_right:
@@ -588,30 +583,74 @@ with tab_daily:
         FTD=('ftd_count', 'sum'),
         FTD_Amt=('ftd_amount_usd', 'sum'),
         Net_Rev=('net_revenue_usd', 'sum'),
+        P_Att=('payment_attempts', 'sum'),
+        P_App=('payment_approved', 'sum'),
     ).reset_index().sort_values('date', ascending=False)
 
     daily_tbl['Reg2Dep'] = (daily_tbl['FTD'] / daily_tbl['Regs'].replace(0, np.nan) * 100).round(1)
-    display_daily = daily_tbl[['date', 'Regs', 'FTD', 'Reg2Dep', 'FTD_Amt', 'Net_Rev']].head(30)
-    display_daily.columns = ['Date', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Net Rev $']
+    daily_tbl['Approval'] = (daily_tbl['P_App'] / daily_tbl['P_Att'].replace(0, np.nan) * 100).round(1)
+    
+    display_daily = daily_tbl[['date', 'Regs', 'FTD', 'Reg2Dep', 'FTD_Amt', 'Approval', 'Net_Rev']].head(30)
+    display_daily.columns = ['Date', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Approval %', 'Net Rev $']
 
     st.dataframe(
         display_daily.style.format({
             'Date': lambda x: x.strftime('%Y-%m-%d'), 
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}',
-            'Reg2Dep %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 'Net Rev $': '${:,.0f}'
-        }),
+            'Reg2Dep %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 
+            'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}'
+        }).background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25),
         use_container_width=True, hide_index=True, height=600,
     )
 
-# Other tabs simplified for brevity...
+# ═══════════════════════════════════════════════════
+# TAB 3: WEEKLY TRENDS
+# ═══════════════════════════════════════════════════
 with tab_weekly:
     st.markdown('<div class="sec-label">Weekly Trends</div>', unsafe_allow_html=True)
-    st.info("Weekly analysis view")
-
-with tab_payments:
-    st.markdown('<div class="sec-label">Payment Health</div>', unsafe_allow_html=True)
     
-    # Using Streamlit metrics for payment funnel
+    df_full = filter_traffic(df_traffic, min_date, max_date, selected_geos, selected_brands, selected_platforms, selected_sources)
+    weekly = df_full.copy()
+    weekly['week'] = weekly['date'].dt.isocalendar().week.astype(int)
+    weekly['year'] = weekly['date'].dt.year
+    
+    wk = weekly.groupby(['year', 'week']).agg(
+        regs=('registrations', 'sum'),
+        ftd=('ftd_count', 'sum'),
+        ftd_amt=('ftd_amount_usd', 'sum'),
+        net_rev=('net_revenue_usd', 'sum'),
+    ).reset_index()
+    
+    wk['reg2dep'] = wk['ftd'] / wk['regs'].replace(0, np.nan)
+    wk['period'] = wk['year'].astype(str) + '-W' + wk['week'].astype(str).str.zfill(2)
+    wk = wk.sort_values(['year', 'week'])
+    
+    col_w1, col_w2 = st.columns(2)
+    
+    with col_w1:
+        fig_wv = make_subplots(specs=[[{"secondary_y": True}]])
+        fig_wv.add_trace(go.Bar(x=wk['period'], y=wk['regs'], name='Registrations',
+                                marker_color=COLORS['blue'], opacity=0.5), secondary_y=False)
+        fig_wv.add_trace(go.Scatter(x=wk['period'], y=wk['ftd'], name='FTD',
+                                    line=dict(color=COLORS['green'], width=2.5)), secondary_y=True)
+        apply_layout(fig_wv, MODE, title='Weekly Volume')
+        fig_wv.update_yaxes(title_text="Registrations", secondary_y=False)
+        fig_wv.update_yaxes(title_text="FTD", secondary_y=True)
+        st.plotly_chart(fig_wv, use_container_width=True, config={'displayModeBar': False})
+    
+    with col_w2:
+        fig_wr = go.Figure()
+        fig_wr.add_trace(go.Bar(x=wk['period'], y=wk['net_rev'], name='Net Revenue',
+                                marker_color=COLORS['green']))
+        apply_layout(fig_wr, MODE, title='Weekly Revenue')
+        st.plotly_chart(fig_wr, use_container_width=True, config={'displayModeBar': False})
+
+# ═══════════════════════════════════════════════════
+# TAB 4: PAYMENT & CONVERSION HEALTH
+# ═══════════════════════════════════════════════════
+with tab_payments:
+    st.markdown('<div class="sec-label">Payment & Conversion Health</div>', unsafe_allow_html=True)
+    
     st.markdown("#### Payment Funnel")
     funnel_cols = st.columns(6)
     
@@ -633,7 +672,47 @@ with tab_payments:
         st.metric("Approved", fmt_num(approved))
     with funnel_cols[5]:
         st.metric("Reg→FTD", fmt_pct(safe_div(ftd, regs)))
+    
+    st.markdown('<div class="sec-label">Payment Approval Trend</div>', unsafe_allow_html=True)
+    
+    trend = df.groupby('date').agg(
+        attempts=('payment_attempts', 'sum'),
+        approved=('payment_approved', 'sum'),
+    ).reset_index()
+    trend['approval_rate'] = trend['approved'] / trend['attempts'].replace(0, np.nan)
+    
+    fig_ap = go.Figure()
+    fig_ap.add_trace(go.Scatter(x=trend['date'], y=trend['approval_rate'],
+                                name='Approval Rate', line=dict(color=COLORS['green'], width=2)))
+    apply_layout(fig_ap, MODE, title='Daily Approval Rate', yaxis_tickformat='.0%')
+    st.plotly_chart(fig_ap, use_container_width=True, config={'displayModeBar': False})
 
+# ═══════════════════════════════════════════════════
+# TAB 5: TRAFFIC & AGENT EFFICIENCY
+# ═══════════════════════════════════════════════════
 with tab_agents:
-    st.markdown('<div class="sec-label">Agent Efficiency</div>', unsafe_allow_html=True)
-    st.info("Agent analysis view")
+    st.markdown('<div class="sec-label">Traffic & Agent Efficiency</div>', unsafe_allow_html=True)
+    
+    a = df.copy()
+    if a.empty:
+        st.info("Немає даних за вибраними фільтрами.")
+    else:
+        agg = a.groupby('agent', as_index=False).agg(
+            Clicks=('clicks','sum'),
+            Regs=('registrations','sum'),
+            FTD=('ftd_count','sum'),
+            FTD_Amt=('ftd_amount_usd','sum'),
+        )
+        
+        agg['Reg2FTD %'] = agg['FTD'] / agg['Regs'].replace(0, np.nan)
+        agg['Click2Reg %'] = agg['Regs'] / agg['Clicks'].replace(0, np.nan)
+        agg = agg.sort_values('FTD_Amt', ascending=False)
+        
+        st.dataframe(
+            agg.style.format({
+                'Clicks':'{:,.0f}','Regs':'{:,.0f}','FTD':'{:,.0f}',
+                'Click2Reg %':'{:.1%}','Reg2FTD %':'{:.1%}',
+                'FTD_Amt':'${:,.0f}'
+            }).background_gradient(subset=['Reg2FTD %'], cmap='RdYlGn', vmin=0, vmax=0.20),
+            use_container_width=True, hide_index=True
+        )
