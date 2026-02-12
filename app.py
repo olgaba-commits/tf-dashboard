@@ -1030,7 +1030,19 @@ with tab_daily:
         use_container_width=True, hide_index=True, height=500,
     )
 
-
+# ═══════════════════════════════════════════════════
+# TAB 3: WEEKLY TRENDS
+# ═══════════════════════════════════════════════════
+with tab_weekly:
+    st.markdown('<div class="sec-label">Weekly Trends</div>', unsafe_allow_html=True)
+    
+    df_full = filter_traffic(df_traffic, min_date, max_date, selected_geos, selected_brands, selected_platforms, selected_sources)
+    weekly = df_full.copy()
+    weekly['week'] = weekly['date'].dt.isocalendar().week.astype(int)
+    weekly['year'] = weekly['date'].dt.year
+    
+    wk = weekly.groupby(['year', 'week']).agg(
+        regs=('registrations', 'sum'),
         ftd=('ftd_count', 'sum'),
         ftd_amt=('ftd_amount_usd', 'sum'),
         net_rev=('net_revenue_usd', 'sum'),
