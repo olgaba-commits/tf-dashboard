@@ -813,10 +813,195 @@ with tab_exec:
             st.metric(stage, value, rate if rate != "-" else None)
 
 # ═══════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════
 # TAB 2: DAILY OPERATIONS
 # ═══════════════════════════════════════════════════
 with tab_daily:
-    st.markdown('<div class="sec-label">Daily Operations</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sec-label">Daily Operations — Today vs Yesterday</div>', unsafe_allow_html=True)
+    
+    # ════════════════════════════════════════════════════════════
+    # TODAY vs YESTERDAY KPI COMPARISON
+    # ════════════════════════════════════════════════════════════
+    today_date = df['date'].max()
+    yesterday_date = today_date - timedelta(days=1)
+    
+    today_data = df[df['date'] == today_date]
+    yesterday_data = df[df['date'] == yesterday_date]
+    
+    today_kpi = compute_kpis(today_data)
+    yesterday_kpi = compute_kpis(yesterday_data)
+    
+    st.markdown(f"### 📅 Today ({today_date.strftime('%Y-%m-%d')}) vs Yesterday ({yesterday_date.strftime('%Y-%m-%d')})")
+    
+    kpi_cols = st.columns(6)
+    
+    kpi_comparisons = [
+        ("Registrations", today_kpi['registrations'], yesterday_kpi['registrations'], "num"),
+        ("FTD Count", today_kpi['ftd_count'], yesterday_kpi['ftd_count'], "num"),
+        ("Reg2Dep", today_kpi['reg2dep'], yesterday_kpi['reg2dep'], "pct"),
+        ("Approval Rate", today_kpi['approval_rate'], yesterday_kpi['approval_rate'], "pct"),
+        ("Avg Check", today_kpi['avg_ftd_check'], yesterday_kpi['avg_ftd_check'], "money"),
+        ("Net Revenue", today_kpi['net_revenue'], yesterday_kpi['net_revenue'], "money"),
+    ]
+    
+    for i, (label, today_val, yesterday_val, fmt_type) in enumerate(kpi_comparisons):
+        with kpi_cols[i]:
+            if fmt_type == "pct":
+                display_val = fmt_pct(today_val)
+                delta_val = (today_val - yesterday_val) * 100
+                delta_str = f"{delta_val:+.1f}pp"
+            elif fmt_type == "money":
+                display_val = fmt_money(today_val)
+                if yesterday_val != 0:
+                    delta_pct = ((today_val - yesterday_val) / yesterday_val) * 100
+                    delta_str = f"{delta_pct:+.1f}%"
+                else:
+                    delta_str = "N/A"
+            else:  # num
+                display_val = fmt_num(today_val)
+                if yesterday_val != 0:
+                    delta_pct = ((today_val - yesterday_val) / yesterday_val) * 100
+                    delta_str = f"{delta_pct:+.1f}%"
+                else:
+                    delta_str = "N/A"
+            
+            st.metric(label, display_val, delta_str)
+    
+    # ════════════════════════════════════════════════════════════
+    # PLATFORM COMPARISON
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">📱 Platform Comparison</div>', unsafe_allow_html=True)
+    
+    platform_col1, platform_col2 = st.columns(2)
+    
+    with platform_col1:
+        # Platform - Regs vs FTD
+        plat_agg = df.groupby('platform').agg(
+            Regs=('registrations', 'sum'),
+            FTD=('ftd_count', 'sum'),
+        ).reset_index().sort_values('Regs', ascending=False)
+        
+        fig_plat = go.Figure()
+        fig_plat.add_trace(go.Bar(
+            x=plat_agg['platform'], y=plat_agg['Regs'],
+            name='Regs', marker_color=COLORS['blue'], opacity=0.8
+        ))
+        fig_plat.add_trace(go.Bar(
+            x=plat_agg['platform'], y=plat_agg['FTD'],
+            name='FTD', marker_color=COLORS['green']
+        ))
+        
+        apply_layout(fig_plat, MODE, title='Regs vs FTD', barmode='group')
+        st.plotly_chart(fig_plat, use_container_width=True, config={'displayModeBar': False})
+    
+    with platform_col2:
+        # Platform - Reg2Dep Conversion Rate
+        plat_agg['Reg2Dep'] = plat_agg['FTD'] / plat_agg['Regs'].replace(0, np.nan)
+        
+        fig_plat_conv = go.Figure()
+        fig_plat_conv.add_trace(go.Bar(
+            x=plat_agg['platform'], y=plat_agg['Reg2Dep'],
+            marker_color=COLORS['purple'],
+            text=plat_agg['Reg2Dep'].apply(lambda x: f"{x:.1%}" if pd.notna(x) else ""),
+            textposition='outside',
+        ))
+        
+        apply_layout(fig_plat_conv, MODE, title='Conversion Rate by Platform', yaxis_tickformat='.0%')
+        st.plotly_chart(fig_plat_conv, use_container_width=True, config={'displayModeBar': False})
+    
+    # ════════════════════════════════════════════════════════════
+    # REG METHODS
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">📝 Reg Methods</div>', unsafe_allow_html=True)
+    
+    reg_col1, reg_col2 = st.columns(2)
+    
+    with reg_col1:
+        # Registration Methods - By Method (Horizontal bars)
+        reg_method_agg = df.groupby('reg_method').agg(
+            Regs=('registrations', 'sum'),
+            FTD=('ftd_count', 'sum'),
+        ).reset_index().sort_values('Regs', ascending=True)
+        
+        fig_rm = go.Figure()
+        fig_rm.add_trace(go.Bar(
+            y=reg_method_agg['reg_method'], x=reg_method_agg['Regs'],
+            name='Regs', orientation='h', marker_color=COLORS['blue'], opacity=0.8
+        ))
+        fig_rm.add_trace(go.Bar(
+            y=reg_method_agg['reg_method'], x=reg_method_agg['FTD'],
+            name='FTD', orientation='h', marker_color=COLORS['green']
+        ))
+        
+        apply_layout(fig_rm, MODE, title='By Method', barmode='group')
+        st.plotly_chart(fig_rm, use_container_width=True, config={'displayModeBar': False})
+    
+    with reg_col2:
+        # Registration Methods - Conversion Rate
+        reg_method_agg['Reg2Dep'] = reg_method_agg['FTD'] / reg_method_agg['Regs'].replace(0, np.nan)
+        
+        fig_rm_conv = go.Figure()
+        fig_rm_conv.add_trace(go.Bar(
+            y=reg_method_agg['reg_method'], x=reg_method_agg['Reg2Dep'],
+            orientation='h', marker_color=COLORS['purple'],
+            text=reg_method_agg['Reg2Dep'].apply(lambda x: f"{x:.1%}" if pd.notna(x) else ""),
+            textposition='outside',
+        ))
+        
+        apply_layout(fig_rm_conv, MODE, title='Conversion Rate by Method', xaxis_tickformat='.0%')
+        st.plotly_chart(fig_rm_conv, use_container_width=True, config={'displayModeBar': False})
+    
+    # ════════════════════════════════════════════════════════════
+    # ADDITIONAL INSIGHTS
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">💡 Additional Insights</div>', unsafe_allow_html=True)
+    
+    insight_col1, insight_col2 = st.columns(2)
+    
+    with insight_col1:
+        # Traffic Source Performance
+        traffic_agg = df.groupby('traffic_source').agg(
+            Regs=('registrations', 'sum'),
+            FTD=('ftd_count', 'sum'),
+            Revenue=('net_revenue_usd', 'sum'),
+        ).reset_index()
+        traffic_agg['Reg2Dep'] = traffic_agg['FTD'] / traffic_agg['Regs'].replace(0, np.nan)
+        traffic_agg = traffic_agg.sort_values('Revenue', ascending=True)
+        
+        fig_traffic = go.Figure()
+        fig_traffic.add_trace(go.Bar(
+            y=traffic_agg['traffic_source'], x=traffic_agg['Revenue'],
+            orientation='h', marker_color=COLORS['cyan'],
+            text=traffic_agg['Reg2Dep'].apply(lambda x: f"{x:.1%}" if pd.notna(x) else ""),
+            textposition='inside', textfont=dict(color='white', size=11),
+        ))
+        
+        apply_layout(fig_traffic, MODE, title='📡 Traffic Source Revenue & Conversion')
+        st.plotly_chart(fig_traffic, use_container_width=True, config={'displayModeBar': False})
+    
+    with insight_col2:
+        # Top GEO Performance
+        geo_agg = df.groupby('geo').agg(
+            FTD=('ftd_count', 'sum'),
+            Revenue=('net_revenue_usd', 'sum'),
+        ).reset_index().sort_values('Revenue', ascending=False).head(10)
+        
+        fig_geo = go.Figure()
+        fig_geo.add_trace(go.Bar(
+            x=geo_agg['geo'], y=geo_agg['Revenue'],
+            marker_color=COLORS['green'],
+            text=geo_agg['FTD'].apply(lambda x: f"{int(x)} FTD"),
+            textposition='outside',
+        ))
+        
+        apply_layout(fig_geo, MODE, title='🌍 Top 10 GEO by Revenue')
+        st.plotly_chart(fig_geo, use_container_width=True, config={'displayModeBar': False})
+    
+    # ════════════════════════════════════════════════════════════
+    # DAILY DATA TABLE
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">📊 Daily Performance Table</div>', unsafe_allow_html=True)
     
     daily_tbl = df.groupby('date').agg(
         Regs=('registrations', 'sum'),
@@ -829,9 +1014,10 @@ with tab_daily:
 
     daily_tbl['Reg2Dep'] = (daily_tbl['FTD'] / daily_tbl['Regs'].replace(0, np.nan) * 100).round(1)
     daily_tbl['Approval'] = (daily_tbl['P_App'] / daily_tbl['P_Att'].replace(0, np.nan) * 100).round(1)
+    daily_tbl['Day'] = daily_tbl['date'].dt.strftime('%a')
     
-    display_daily = daily_tbl[['date', 'Regs', 'FTD', 'Reg2Dep', 'FTD_Amt', 'Approval', 'Net_Rev']].head(30)
-    display_daily.columns = ['Date', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Approval %', 'Net Rev $']
+    display_daily = daily_tbl[['date', 'Day', 'Regs', 'FTD', 'Reg2Dep', 'FTD_Amt', 'Approval', 'Net_Rev']].head(30)
+    display_daily.columns = ['Date', 'Day', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Approval %', 'Net Rev $']
 
     st.dataframe(
         display_daily.style.format({
@@ -839,114 +1025,11 @@ with tab_daily:
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}',
             'Reg2Dep %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 
             'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}'
-        }).background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25),
-        use_container_width=True, hide_index=True, height=600,
+        }).background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
+         .background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=50, vmax=95),
+        use_container_width=True, hide_index=True, height=500,
     )
-    
-    # ════════════════════════════════════════════════════════════
-    # DAILY CHANGE ANALYSIS - Quick Comparison
-    # ════════════════════════════════════════════════════════════
-    st.markdown('<div class="sec-label">Daily Change Analysis (vs Previous Day)</div>', unsafe_allow_html=True)
-    
-    # Get latest 2 days
-    today_data = df[df['date'] == df['date'].max()]
-    yesterday_data = df[df['date'] == (df['date'].max() - timedelta(days=1))]
-    
-    today_kpi = compute_kpis(today_data)
-    yesterday_kpi = compute_kpis(yesterday_data)
-    
-    change_cols = st.columns(5)
-    
-    change_metrics = [
-        ("Regs", today_kpi['registrations'], yesterday_kpi['registrations'], False),
-        ("FTD", today_kpi['ftd_count'], yesterday_kpi['ftd_count'], False),
-        ("Reg2Dep", today_kpi['reg2dep'], yesterday_kpi['reg2dep'], False),
-        ("Approval", today_kpi['approval_rate'], yesterday_kpi['approval_rate'], False),
-        ("Revenue", today_kpi['net_revenue'], yesterday_kpi['net_revenue'], False),
-    ]
-    
-    for i, (label, today_val, yesterday_val, is_inverse) in enumerate(change_metrics):
-        with change_cols[i]:
-            if label in ["Reg2Dep", "Approval"]:
-                display_val = fmt_pct(today_val)
-                delta_val = (today_val - yesterday_val) * 100
-                delta_str = f"{delta_val:+.1f}pp"
-            elif label == "Revenue":
-                display_val = fmt_money(today_val)
-                delta_pct = pct_change(today_val, yesterday_val) * 100
-                delta_str = f"{delta_pct:+.1f}%"
-            else:
-                display_val = fmt_num(today_val)
-                delta_pct = pct_change(today_val, yesterday_val) * 100
-                delta_str = f"{delta_pct:+.1f}%"
-            
-            st.metric(label, display_val, delta_str)
-    
-    # ════════════════════════════════════════════════════════════
-    # PLATFORM & REGISTRATION ANALYSIS
-    # ════════════════════════════════════════════════════════════
-    st.markdown('<div class="sec-label">📱 Platform & 📝 Registration Deep Dive</div>', unsafe_allow_html=True)
-    
-    col_p1, col_p2 = st.columns(2)
-    
-    with col_p1:
-        # Platform Comparison - Regs vs FTD
-        plat_agg = df.groupby('platform').agg(
-            Regs=('registrations', 'sum'),
-            FTD=('ftd_count', 'sum'),
-            Revenue=('net_revenue_usd', 'sum'),
-        ).reset_index()
-        
-        fig_plat = go.Figure()
-        fig_plat.add_trace(go.Bar(
-            x=plat_agg['platform'], y=plat_agg['Regs'],
-            name='Registrations', marker_color=COLORS['blue'], opacity=0.7
-        ))
-        fig_plat.add_trace(go.Bar(
-            x=plat_agg['platform'], y=plat_agg['FTD'],
-            name='FTD', marker_color=COLORS['green'], yaxis='y2'
-        ))
-        
-        apply_layout(fig_plat, MODE, title='📱 Platform Comparison: Regs vs FTD')
-        fig_plat.update_layout(
-            yaxis=dict(title="Registrations"),
-            yaxis2=dict(title="FTD", overlaying='y', side='right')
-        )
-        st.plotly_chart(fig_plat, use_container_width=True, config={'displayModeBar': False})
-    
-    with col_p2:
-        # Registration Methods - Regs vs FTD
-        reg_method_agg = df.groupby('reg_method').agg(
-            Regs=('registrations', 'sum'),
-            FTD=('ftd_count', 'sum'),
-        ).reset_index().sort_values('Regs', ascending=True)
-        
-        fig_rm = go.Figure()
-        fig_rm.add_trace(go.Bar(
-            y=reg_method_agg['reg_method'], x=reg_method_agg['Regs'],
-            name='Registrations', orientation='h', marker_color=COLORS['blue'], opacity=0.7
-        ))
-        fig_rm.add_trace(go.Bar(
-            y=reg_method_agg['reg_method'], x=reg_method_agg['FTD'],
-            name='FTD', orientation='h', marker_color=COLORS['green']
-        ))
-        
-        apply_layout(fig_rm, MODE, title='📝 Registration Methods: Volume & Conversion', barmode='group')
-        st.plotly_chart(fig_rm, use_container_width=True, config={'displayModeBar': False})
 
-# ═══════════════════════════════════════════════════
-# TAB 3: WEEKLY TRENDS
-# ═══════════════════════════════════════════════════
-with tab_weekly:
-    st.markdown('<div class="sec-label">Weekly Trends</div>', unsafe_allow_html=True)
-    
-    df_full = filter_traffic(df_traffic, min_date, max_date, selected_geos, selected_brands, selected_platforms, selected_sources)
-    weekly = df_full.copy()
-    weekly['week'] = weekly['date'].dt.isocalendar().week.astype(int)
-    weekly['year'] = weekly['date'].dt.year
-    
-    wk = weekly.groupby(['year', 'week']).agg(
-        regs=('registrations', 'sum'),
         ftd=('ftd_count', 'sum'),
         ftd_amt=('ftd_amount_usd', 'sum'),
         net_rev=('net_revenue_usd', 'sum'),
