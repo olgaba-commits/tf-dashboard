@@ -1246,20 +1246,30 @@ with tab_payments:
     st.markdown('<div class="sec-label">📊 Payment Status Breakdown (Daily)</div>', unsafe_allow_html=True)
     
     if not pm.empty:
-        # Daily status breakdown
-        status_daily = pm.groupby('date').agg(
-            Approved=('approved_count', 'sum'),
-            Declined=('declined_count', 'sum'),
-            Pending=('pending_count', 'sum'),
-        ).reset_index()
+        # Daily status breakdown - check which columns exist
+        available_cols = pm.columns.tolist()
         
+        agg_dict = {
+            'Approved': ('approved_count', 'sum'),
+            'Declined': ('declined_count', 'sum'),
+        }
+        
+        # Add pending if it exists
+        if 'pending_count' in available_cols:
+            agg_dict['Pending'] = ('pending_count', 'sum')
+        
+        status_daily = pm.groupby('date').agg(**agg_dict).reset_index()
+        
+        # Create figure
         fig_status = go.Figure()
         fig_status.add_trace(go.Bar(x=status_daily['date'], y=status_daily['Approved'],
                                    name='Approved', marker_color=COLORS['green']))
         fig_status.add_trace(go.Bar(x=status_daily['date'], y=status_daily['Declined'],
                                    name='Declined', marker_color=COLORS['red']))
-        fig_status.add_trace(go.Bar(x=status_daily['date'], y=status_daily['Pending'],
-                                   name='Pending', marker_color=COLORS['amber']))
+        
+        if 'Pending' in status_daily.columns:
+            fig_status.add_trace(go.Bar(x=status_daily['date'], y=status_daily['Pending'],
+                                       name='Pending', marker_color=COLORS['amber']))
         
         apply_layout(fig_status, MODE, title='Payment Status Breakdown', barmode='stack')
         st.plotly_chart(fig_status, use_container_width=True, config={'displayModeBar': False})
@@ -1267,7 +1277,7 @@ with tab_payments:
         # Status summary
         total_approved = int(status_daily['Approved'].sum())
         total_declined = int(status_daily['Declined'].sum())
-        total_pending = int(status_daily['Pending'].sum())
+        total_pending = int(status_daily['Pending'].sum()) if 'Pending' in status_daily.columns else 0
         total = total_approved + total_declined + total_pending
         
         status_cols = st.columns(3)
@@ -1278,8 +1288,11 @@ with tab_payments:
             st.metric("❌ Declined", f"{fmt_num(total_declined)}", 
                      f"{(total_declined/total*100):.1f}%" if total > 0 else "0%")
         with status_cols[2]:
-            st.metric("⏳ Pending", f"{fmt_num(total_pending)}", 
-                     f"{(total_pending/total*100):.1f}%" if total > 0 else "0%")
+            if total_pending > 0:
+                st.metric("⏳ Pending", f"{fmt_num(total_pending)}", 
+                         f"{(total_pending/total*100):.1f}%" if total > 0 else "0%")
+            else:
+                st.metric("⏳ Pending", "N/A")
 
 # ═══════════════════════════════════════════════════
 # TAB 5: TRAFFIC & AGENT EFFICIENCY
