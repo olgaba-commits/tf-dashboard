@@ -1101,10 +1101,10 @@ with tab_exec:
 
     geo_styler = (
         geo_display.style.format({
-            'Regs': '{:,0f}', 'FTD': '{:,0f}', 'Reg2Dep %': '{:.1f}%',
-            'FTD Amt $': '${:,0f}', 'Approval %': '{:.1f}%', 
-            'Net Rev $': '${:,0f}', 'eCPA $': '${:.0f}'
-        })
+            'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep %': '{:.1f}%',
+            'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1f}%', 
+            'Net Rev $': '${:,.0f}', 'eCPA $': '${:,.0f}'
+        }, na_rep="—")
         .background_gradient(subset=['Reg2Dep %'], cmap=HEATMAP_CMAP, vmin=0, vmax=25)
     )
 
@@ -1496,7 +1496,7 @@ with tab_weekly:
         wk_display.style.format({
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep': '{:.1%}',
             'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1%}',
-            'Net Rev $': '${:,.0f}', 'eCPA $': '${:.0f}', 'ROI': '{:.1%}'
+            'Net Rev $': '${:,.0f}', 'eCPA $': '${:,.0f}', 'ROI': '{:.1%}'
         })
         .background_gradient(subset=['Reg2Dep'], cmap=HEATMAP_CMAP, vmin=0, vmax=0.25)
         .background_gradient(subset=['Approval %'], cmap=HEATMAP_CMAP, vmin=0.5, vmax=0.95)
