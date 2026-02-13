@@ -50,6 +50,9 @@ section[data-testid="stSidebar"] {
     margin-bottom: 20px;
 }
 
+.main-header h1 { color: #E4E6F0; }
+.main-header p { color: #565B7A; }
+
 .score-card {
     background: #131730;
     border: 1px solid #1E2240;
@@ -69,7 +72,7 @@ section[data-testid="stSidebar"] {
 
 .sc-label {
     font-size: 11px;
-    color: #565B7A;
+    color: #7B80A0;
     text-transform: uppercase;
     letter-spacing: .9px;
     font-weight: 600;
@@ -93,7 +96,7 @@ section[data-testid="stSidebar"] {
 
 .sc-sub {
     font-size: 10px;
-    color: #565B7A;
+    color: #7B80A0;
     margin-top: 4px;
 }
 
@@ -101,7 +104,7 @@ section[data-testid="stSidebar"] {
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    color: #565B7A;
+    color: #7B80A0;
     font-weight: 700;
     margin: 24px 0 12px;
     padding-bottom: 8px;
@@ -116,7 +119,7 @@ div[data-testid="stMetric"] {
 }
 
 div[data-testid="stMetric"] label {
-    color: #565B7A !important;
+    color: #7B80A0 !important;
     font-size: 11px !important;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -136,9 +139,20 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     padding: 3px;
 }
 
+.stTabs [data-baseweb="tab"] {
+    color: #7B80A0;
+    font-weight: 600;
+}
+
 .stTabs [aria-selected="true"] {
     background: #131730 !important;
     color: #E4E6F0 !important;
+}
+
+/* Dark mode dataframe */
+.stDataFrame {
+    border-radius: 12px;
+    overflow: hidden;
 }
 </style>
 """
@@ -151,15 +165,28 @@ LIGHT_CSS = """
 
 /* ═══ BASE ═══ */
 .stApp {
-    background: #F4F6FB;
+    background: #F0F2F8;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #1A1D2E;
+    color: #111827;
+}
+
+/* Force all text to be dark in light mode */
+.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
+    color: #111827 !important;
+}
+
+.stApp p, .stApp span, .stApp div {
+    color: inherit;
+}
+
+.stMarkdown {
+    color: #111827;
 }
 
 /* ═══ SIDEBAR ═══ */
 section[data-testid="stSidebar"] {
     background: #FFFFFF;
-    border-right: 1px solid #E5E9F2;
+    border-right: 1px solid #E0E4ED;
 }
 
 section[data-testid="stSidebar"] > div:first-child {
@@ -169,25 +196,29 @@ section[data-testid="stSidebar"] > div:first-child {
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3 {
-    color: #1A1D2E;
+    color: #111827 !important;
     font-weight: 700;
 }
 
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span {
+    color: #374151 !important;
+}
+
 section[data-testid="stSidebar"] label {
-    color: #5A6178 !important;
+    color: #374151 !important;
     font-weight: 600 !important;
-    font-size: 12.5px !important;
-    letter-spacing: 0.2px;
+    font-size: 13px !important;
 }
 
 section[data-testid="stSidebar"] hr {
-    border-color: #EDF0F7;
+    border-color: #E5E7EB;
     margin: 0.75rem 0;
 }
 
 section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {
     background: #EEF2FF;
-    color: #4338CA;
+    color: #3730A3;
     border: 1px solid #C7D2FE;
     border-radius: 6px;
     font-weight: 600;
@@ -195,40 +226,40 @@ section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {
 }
 
 section[data-testid="stSidebar"] [data-baseweb="select"] > div {
-    border-color: #E2E6F0;
+    border-color: #D1D5DB;
     border-radius: 10px;
-    background: #FAFBFE;
+    background: #FAFBFF;
+    color: #111827;
 }
 
 section[data-testid="stSidebar"] [data-baseweb="input"] {
-    border-color: #E2E6F0;
+    border-color: #D1D5DB;
     border-radius: 10px;
-    background: #FAFBFE;
+    background: #FAFBFF;
 }
 
 /* ═══ HEADER ═══ */
 .main-header {
     background: #FFFFFF;
-    border: 1px solid #E5E9F2;
+    border: 1px solid #E0E4ED;
     border-radius: 16px;
     padding: 26px 30px;
     margin-bottom: 22px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .main-header h1 {
     font-family: 'Inter', sans-serif;
     font-size: 26px;
     font-weight: 800;
-    color: #1A1D2E;
+    color: #111827 !important;
     letter-spacing: -0.6px;
     margin: 0;
 }
 
-.main-header .subtitle,
 .main-header p {
     font-size: 13.5px;
-    color: #7C839E !important;
+    color: #6B7280 !important;
     margin-top: 5px;
     font-weight: 500;
 }
@@ -236,25 +267,25 @@ section[data-testid="stSidebar"] [data-baseweb="input"] {
 /* ═══ SCORECARD ═══ */
 .score-card {
     background: #FFFFFF;
-    border: 1px solid #E5E9F2;
+    border: 1px solid #E0E4ED;
     border-radius: 14px;
     padding: 20px 22px 18px;
     height: 100%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
 
 .score-card:hover {
-    border-color: #D1D6E6;
+    border-color: #C9CDD9;
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
 }
 
 .sc-label {
-    font-size: 10.5px;
-    color: #8B90AD;
+    font-size: 11px;
+    color: #6B7280;
     text-transform: uppercase;
     letter-spacing: 0.9px;
     font-weight: 700;
@@ -265,7 +296,7 @@ section[data-testid="stSidebar"] [data-baseweb="input"] {
     font-family: 'JetBrains Mono', monospace;
     font-size: 26px;
     font-weight: 700;
-    color: #1A1D2E;
+    color: #111827;
     margin-bottom: 8px;
     letter-spacing: -0.8px;
 }
@@ -279,12 +310,12 @@ section[data-testid="stSidebar"] [data-baseweb="input"] {
     padding: 2px 8px;
     border-radius: 6px;
 }
-.sc-compare.up { color: #059669; background: #ECFDF5; }
-.sc-compare.down { color: #DC2626; background: #FEF2F2; }
+.sc-compare.up { color: #047857; background: #D1FAE5; }
+.sc-compare.down { color: #DC2626; background: #FEE2E2; }
 
 .sc-sub {
     font-size: 11px;
-    color: #9CA3BD;
+    color: #9CA3AF;
     margin-top: 6px;
     font-weight: 500;
 }
@@ -294,31 +325,31 @@ section[data-testid="stSidebar"] [data-baseweb="input"] {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1.6px;
-    color: #6B7194;
+    color: #4B5563;
     font-weight: 700;
     margin: 28px 0 14px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #E5E9F2;
+    border-bottom: 2px solid #E0E4ED;
 }
 
 /* ═══ METRICS ═══ */
 div[data-testid="stMetric"] {
     background: #FFFFFF;
-    border: 1px solid #E5E9F2;
+    border: 1px solid #E0E4ED;
     border-radius: 12px;
     padding: 14px 18px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     transition: all .2s;
 }
 
 div[data-testid="stMetric"]:hover {
-    border-color: #D1D6E6;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    border-color: #C9CDD9;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
 div[data-testid="stMetric"] label {
-    color: #8B90AD !important;
-    font-size: 10.5px !important;
+    color: #6B7280 !important;
+    font-size: 11px !important;
     font-weight: 700 !important;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -326,19 +357,19 @@ div[data-testid="stMetric"] label {
 
 div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     font-family: 'JetBrains Mono', monospace;
-    color: #1A1D2E;
+    color: #111827 !important;
     font-size: 21px;
     font-weight: 700;
 }
 
 div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 700;
 }
 
 /* ═══ TABS ═══ */
 .stTabs [data-baseweb="tab-list"] {
-    background: #EBEEF5;
+    background: #E5E7EB;
     border-radius: 12px;
     padding: 4px;
     gap: 3px;
@@ -347,7 +378,7 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 
 .stTabs [data-baseweb="tab"] {
     border-radius: 9px;
-    color: #7C839E;
+    color: #6B7280;
     font-weight: 600;
     padding: 9px 16px;
     font-size: 13.5px;
@@ -355,15 +386,15 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 }
 
 .stTabs [data-baseweb="tab"]:hover {
-    color: #4B5169;
+    color: #374151;
     background: rgba(255,255,255,0.5);
 }
 
 .stTabs [aria-selected="true"] {
     background: #FFFFFF !important;
-    color: #1A1D2E !important;
+    color: #111827 !important;
     font-weight: 700 !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     border: none !important;
 }
 
@@ -371,8 +402,8 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 .stDataFrame {
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid #E5E9F2;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    border: 1px solid #E0E4ED;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .stDataFrame table {
@@ -381,21 +412,22 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 }
 
 .stDataFrame thead {
-    background: #F7F8FC !important;
+    background: #F3F4F6 !important;
 }
 
 .stDataFrame th {
-    color: #4B5169 !important;
+    color: #374151 !important;
     font-weight: 700 !important;
     text-transform: uppercase;
     font-size: 10.5px !important;
     letter-spacing: 0.7px;
-    border-bottom: 2px solid #E2E6F0 !important;
+    border-bottom: 2px solid #D1D5DB !important;
     padding: 12px !important;
+    background: #F3F4F6 !important;
 }
 
 .stDataFrame tbody tr:nth-child(even) {
-    background-color: #FAFBFE !important;
+    background-color: #F9FAFB !important;
 }
 
 .stDataFrame tbody tr:nth-child(odd) {
@@ -403,14 +435,20 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 }
 
 .stDataFrame tbody tr:hover {
-    background-color: #F0F2FA !important;
+    background-color: #EEF2FF !important;
 }
 
 .stDataFrame td {
-    color: #2D3148 !important;
+    color: #1F2937 !important;
     font-weight: 500;
-    border-bottom: 1px solid #EDF0F7 !important;
+    border-bottom: 1px solid #E5E7EB !important;
     padding: 11px 12px !important;
+}
+
+/* ═══ Force Streamlit dataframe header ═══ */
+[data-testid="stDataFrame"] [data-testid="glideDataEditor"] {
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 /* ═══ BUTTONS & INPUTS ═══ */
@@ -432,15 +470,28 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 }
 
 .stSelectbox [data-baseweb="select"] > div {
-    border-color: #E2E6F0;
+    border-color: #D1D5DB;
     border-radius: 10px;
     background: #FFFFFF;
+    color: #111827;
+}
+
+.stSelectbox label {
+    color: #374151 !important;
+    font-weight: 600 !important;
 }
 
 .stDateInput input {
-    border-color: #E2E6F0;
+    border-color: #D1D5DB;
     border-radius: 10px;
     background: #FFFFFF;
+    color: #111827;
+}
+
+/* ═══ TOGGLE ═══ */
+.stToggle label span {
+    color: #374151 !important;
+    font-weight: 600 !important;
 }
 
 /* ═══ SCROLLBAR ═══ */
@@ -449,29 +500,14 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #F4F6FB;
+    background: #F0F2F8;
 }
 ::-webkit-scrollbar-thumb {
-    background: #CDD1E0;
+    background: #C9CDD9;
     border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #A8ADBF;
-}
-
-/* ═══ EXPANDER ═══ */
-.streamlit-expanderHeader {
-    background: #FFFFFF;
-    border: 1px solid #E5E9F2;
-    border-radius: 10px;
-    font-weight: 600;
-    color: #4B5169;
-}
-
-/* ═══ TOGGLE ═══ */
-.stToggle label span {
-    color: #5A6178 !important;
-    font-weight: 600 !important;
+    background: #A0A5B5;
 }
 
 /* ═══ INFO / WARNING BOXES ═══ */
@@ -488,6 +524,15 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     border-width: 1px;
 }
+
+/* ═══ PLOTLY CHART CONTAINERS ═══ */
+.stPlotlyChart {
+    background: #FFFFFF;
+    border-radius: 12px;
+    border: 1px solid #E0E4ED;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    padding: 4px;
+}
 </style>
 """
 
@@ -498,17 +543,17 @@ def apply_theme_css(mode: str):
 # PLOTLY THEME
 # ══════════════════════════════════════════════
 COLORS = {
-    'blue': '#3B82F6',      # Bright blue
-    'green': '#10B981',     # Emerald green
-    'red': '#EF4444',       # Clear red
-    'amber': '#F59E0B',     # Warm amber
-    'purple': '#8B5CF6',    # Rich purple
-    'cyan': '#06B6D4',      # Ocean cyan
-    'pink': '#EC4899',      # Hot pink
-    'orange': '#F97316',    # Vivid orange
+    'blue': '#3B82F6',
+    'green': '#10B981',
+    'red': '#EF4444',
+    'amber': '#F59E0B',
+    'purple': '#8B5CF6',
+    'cyan': '#06B6D4',
+    'pink': '#EC4899',
+    'orange': '#F97316',
 }
 
-# Slightly adjusted sequence for light mode readability
+# Deeper colors for light mode — better contrast on white
 COLORS_LIGHT = {
     'blue': '#2563EB',
     'green': '#059669',
@@ -521,6 +566,7 @@ COLORS_LIGHT = {
 }
 
 COLOR_SEQ = list(COLORS.values())
+COLOR_SEQ_LIGHT = list(COLORS_LIGHT.values())
 
 def apply_layout(fig, mode: str, **kwargs):
     if mode == "dark":
@@ -533,30 +579,29 @@ def apply_layout(fig, mode: str, **kwargs):
             colorway=COLOR_SEQ,
         )
     else:
-        # Light mode with refined aesthetics
         base_layout = dict(
             template='plotly_white',
             paper_bgcolor='#FFFFFF',
-            plot_bgcolor='#FAFBFE',
-            font=dict(family='Inter, sans-serif', color='#4B5169', size=12),
+            plot_bgcolor='#FAFBFF',
+            font=dict(family='Inter, sans-serif', color='#374151', size=12),
             margin=dict(l=20, r=20, t=44, b=20),
-            colorway=list(COLORS_LIGHT.values()),
-            title=dict(font=dict(size=14, color='#1A1D2E', family='Inter, sans-serif')),
+            colorway=COLOR_SEQ_LIGHT,
+            title=dict(font=dict(size=14, color='#111827', family='Inter, sans-serif')),
             xaxis=dict(
-                gridcolor='#EDF0F7',
-                linecolor='#E2E6F0',
-                zerolinecolor='#E2E6F0',
-                tickfont=dict(color='#6B7194', size=11),
+                gridcolor='#E5E7EB',
+                linecolor='#D1D5DB',
+                zerolinecolor='#D1D5DB',
+                tickfont=dict(color='#6B7280', size=11),
             ),
             yaxis=dict(
-                gridcolor='#EDF0F7',
-                linecolor='#E2E6F0',
-                zerolinecolor='#E2E6F0',
-                tickfont=dict(color='#6B7194', size=11),
+                gridcolor='#E5E7EB',
+                linecolor='#D1D5DB',
+                zerolinecolor='#D1D5DB',
+                tickfont=dict(color='#6B7280', size=11),
             ),
             legend=dict(
-                font=dict(color='#4B5169', size=11),
-                bgcolor='rgba(255,255,255,0.8)',
+                font=dict(color='#374151', size=11),
+                bgcolor='rgba(255,255,255,0.9)',
             ),
         )
     
@@ -675,7 +720,7 @@ def scorecard_html(label, value, change_pct, sub_text="", accent_color="#5B8DEF"
     symbol = "▲" if direction == "up" else "▼"
     return f"""
     <div class="score-card">
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:{accent_color}"></div>
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:{accent_color}"></div>
         <div class="sc-label">{label}</div>
         <div class="sc-value">{value}</div>
         <div class="sc-compare {direction}">{symbol} {abs(change_pct)*100:.1f}%</div>
@@ -735,7 +780,7 @@ with tab_exec:
     st.markdown(f"""
     <div class="main-header">
         <h1>Traffic & Finance Dashboard</h1>
-        <p style="font-size:13px;color:{'#565B7A' if MODE == 'dark' else '#7C839E'};margin-top:4px">
+        <p style="font-size:13px;color:{'#7B80A0' if MODE == 'dark' else '#6B7280'};margin-top:4px">
             Acquisition Focus · {start_date.strftime('%b %d')} — {end_date.strftime('%b %d, %Y')}
         </p>
     </div>
@@ -861,14 +906,17 @@ with tab_exec:
                 bg_color = '#2D0E0E' if MODE == 'dark' else '#FEF2F2'
                 border_color = '#F06A6A30' if MODE == 'dark' else '#FCA5A5'
                 text_color = '#F06A6A' if MODE == 'dark' else '#DC2626'
+                impact_bg = 'rgba(240,106,106,0.1)' if MODE == 'dark' else 'rgba(220,38,38,0.08)'
             elif alert['type'] == 'warning':
                 bg_color = '#2D1F0E' if MODE == 'dark' else '#FFFBEB'
                 border_color = '#F0B05A30' if MODE == 'dark' else '#FCD34D'
                 text_color = '#F0B05A' if MODE == 'dark' else '#B45309'
+                impact_bg = 'rgba(240,176,90,0.1)' if MODE == 'dark' else 'rgba(217,119,6,0.08)'
             else:  # success
                 bg_color = '#0E2D20' if MODE == 'dark' else '#F0FDF4'
                 border_color = '#3DDFA030' if MODE == 'dark' else '#86EFAC'
                 text_color = '#3DDFA0' if MODE == 'dark' else '#059669'
+                impact_bg = 'rgba(61,223,160,0.1)' if MODE == 'dark' else 'rgba(5,150,105,0.08)'
             
             st.markdown(f"""
             <div style="
@@ -886,7 +934,7 @@ with tab_exec:
                         <div style="font-weight: 700; color: {text_color}; margin-bottom: 6px; font-size: 14px;">
                             {alert['title']}
                         </div>
-                        <div style="margin-bottom: 8px; line-height: 1.5;">
+                        <div style="margin-bottom: 8px; line-height: 1.5; color: {'#C0C3D4' if MODE == 'dark' else '#374151'};">
                             {alert['message']}
                         </div>
                         <div style="
@@ -896,14 +944,14 @@ with tab_exec:
                             margin-bottom: 8px;
                             font-size: 13px;
                             padding: 8px 12px;
-                            background: {'rgba(240,106,106,0.1)' if alert['type'] == 'critical' else 'rgba(240,176,90,0.1)' if alert['type'] == 'warning' else 'rgba(61,223,160,0.1)'};
+                            background: {impact_bg};
                             border-radius: 6px;
                         ">
                             💰 {alert['impact']}
                         </div>
                         <div style="
                             font-size: 12px;
-                            color: {'#8B90AD' if MODE == 'dark' else '#7C839E'};
+                            color: {'#8B90AD' if MODE == 'dark' else '#6B7280'};
                             font-style: italic;
                             padding-left: 12px;
                             border-left: 2px solid {border_color};
@@ -1138,7 +1186,8 @@ with tab_daily:
     today_kpi = compute_kpis(today_data)
     yesterday_kpi = compute_kpis(yesterday_data)
     
-    st.markdown(f"**Today ({today_date.strftime('%Y-%m-%d')})** vs **Yesterday ({yesterday_date.strftime('%Y-%m-%d')})**")
+    today_color = '#C0C3D4' if MODE == 'dark' else '#374151'
+    st.markdown(f"<span style='color:{today_color}'><b>Today ({today_date.strftime('%Y-%m-%d')})</b> vs <b>Yesterday ({yesterday_date.strftime('%Y-%m-%d')})</b></span>", unsafe_allow_html=True)
     
     kpi_cols = st.columns(6)
     
@@ -1445,17 +1494,21 @@ with tab_payments:
                     alert_color = COLORS['red']
                     bg_color = '#2D0E0E' if MODE == 'dark' else '#FEF2F2'
                 
+                border_w = '2px' if MODE == 'dark' else '1px'
+                shadow = '' if MODE == 'dark' else 'box-shadow: 0 1px 4px rgba(0,0,0,0.04);'
+                sub_color = '#8B90AD' if MODE == 'dark' else '#6B7280'
+                
                 st.markdown(f"""
                 <div style="
                     background: {bg_color};
-                    border: {'2px' if MODE == 'dark' else '1px'} solid {alert_color};
+                    border: {border_w} solid {alert_color};
                     border-radius: 14px;
                     padding: 22px 26px;
                     margin-bottom: 20px;
                     text-align: center;
-                    {'box-shadow: 0 1px 4px rgba(0,0,0,0.04);' if MODE == 'light' else ''}
+                    {shadow}
                 ">
-                    <div style="font-size: 10.5px; color: {'#8B90AD' if MODE == 'dark' else '#7C839E'}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                    <div style="font-size: 11px; color: {sub_color}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
                         Current Hour Approval Rate
                     </div>
                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; color: {alert_color}; margin-bottom: 8px;">
@@ -1464,7 +1517,7 @@ with tab_payments:
                     <div style="font-size: 18px; font-weight: 600; color: {alert_color}; margin-bottom: 12px;">
                         {status}
                     </div>
-                    <div style="font-size: 13px; color: {'#8B90AD' if MODE == 'dark' else '#7C839E'};">
+                    <div style="font-size: 13px; color: {sub_color};">
                         {int(hour_attempts)} attempts · {latest_date.strftime('%Y-%m-%d %H:00')}
                     </div>
                 </div>
@@ -1638,23 +1691,29 @@ with tab_agents:
         for idx, (i, row) in enumerate(agg.head(3).iterrows()):
             with top3_cols[idx]:
                 medal = ["🥇", "🥈", "🥉"][idx]
+                card_bg = '#131730' if MODE == 'dark' else '#FFFFFF'
+                card_border = f'1px solid {COLORS["green"]}' if MODE == 'dark' else '1px solid #E0E4ED'
+                card_shadow = 'none' if MODE == 'dark' else '0 1px 4px rgba(0,0,0,0.05)'
+                card_top_border = f'border-top: 3px solid {COLORS["green"]};' if MODE == 'light' else ''
+                name_color = '#E4E6F0' if MODE == 'dark' else '#111827'
+                sub_color = '#8B90AD' if MODE == 'dark' else '#6B7280'
                 st.markdown(f"""
                 <div style="
-                    background: {'#131730' if MODE == 'dark' else '#FFFFFF'};
-                    border: {'2px solid ' + COLORS['green'] if MODE == 'dark' else '1px solid #E5E9F2'};
+                    background: {card_bg};
+                    border: {card_border};
+                    {card_top_border}
                     border-radius: 14px;
                     padding: 22px;
                     text-align: center;
                     margin-bottom: 16px;
-                    box-shadow: {'none' if MODE == 'dark' else '0 1px 3px rgba(0,0,0,0.04)'};
-                    {'border-top: 3px solid ' + COLORS['green'] if MODE == 'light' else ''}
+                    box-shadow: {card_shadow};
                 ">
                     <div style="font-size: 40px; margin-bottom: 12px;">{medal}</div>
-                    <div style="font-size: 17px; font-weight: 700; margin-bottom: 8px; color: {'#E4E6F0' if MODE == 'dark' else '#1A1D2E'};">{row['agent']}</div>
+                    <div style="font-size: 17px; font-weight: 700; margin-bottom: 8px; color: {name_color};">{row['agent']}</div>
                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 24px; color: {COLORS['green']}; font-weight: 700; margin-bottom: 8px;">
                         {fmt_money(row['FTD_Amt'])}
                     </div>
-                    <div style="font-size: 13px; color: {'#8B90AD' if MODE == 'dark' else '#7C839E'}; margin-top: 8px;">
+                    <div style="font-size: 13px; color: {sub_color}; margin-top: 8px;">
                         {int(row['FTD'])} FTD · {row['Reg2FTD %']:.1%} CR
                     </div>
                 </div>
