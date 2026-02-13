@@ -145,121 +145,251 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 
 LIGHT_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root { color-scheme: light; }
 
 .stApp {
-    background: #F9FAFB;
-    font-family: 'Outfit', sans-serif;
-    color: #111827;
+    background: linear-gradient(to bottom, #F8FAFC 0%, #F1F5F9 100%);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #0F172A;
 }
 
 section[data-testid="stSidebar"] {
     background: #FFFFFF;
-    border-right: 1px solid #E5E7EB;
+    border-right: 1px solid #CBD5E1;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.04);
 }
 
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: #0F172A;
+    font-weight: 700;
+}
+
+section[data-testid="stSidebar"] label {
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
+
+/* === HEADER === */
 .main-header {
-    background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
-    border: 1px solid #D1D5DB;
-    border-radius: 14px;
-    padding: 24px 28px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+    border: 2px solid #CBD5E1;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
 
+.main-header h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.8px;
+    margin: 0;
+}
+
+.main-header .subtitle {
+    font-size: 14px;
+    color: #64748B;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* === SCORECARD === */
 .score-card {
     background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 14px;
-    padding: 18px 20px 16px;
+    border: 2px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 20px 22px 18px;
     height: 100%;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    transition: all .3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .score-card:hover {
-    border-color: #D1D5DB;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-color: #CBD5E1;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 
 .sc-label {
     font-size: 11px;
-    color: #6B7280;
+    color: #64748B;
     text-transform: uppercase;
-    letter-spacing: .9px;
+    letter-spacing: 1px;
     font-weight: 700;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .sc-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 26px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 8px;
-}
-
-.sc-compare.up { color: #059669; }
-.sc-compare.down { color: #DC2626; }
-
-.sec-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #6B7280;
+    font-size: 28px;
     font-weight: 800;
-    margin: 24px 0 12px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #E5E7EB;
+    color: #0F172A;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
 }
 
+.sc-compare {
+    font-size: 13px;
+    font-weight: 700;
+}
+.sc-compare.up { color: #10B981; }
+.sc-compare.down { color: #EF4444; }
+
+.sc-sub {
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* === SECTION LABEL === */
+.sec-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: #475569;
+    font-weight: 800;
+    margin: 28px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #E2E8F0;
+}
+
+/* === METRICS === */
 div[data-testid="stMetric"] {
     background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    padding: 12px 16px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    border: 2px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    transition: all .2s;
+}
+
+div[data-testid="stMetric"]:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 div[data-testid="stMetric"] label {
-    color: #6B7280 !important;
+    color: #64748B !important;
     font-size: 11px !important;
-    font-weight: 600;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
 }
 
 div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     font-family: 'JetBrains Mono', monospace;
-    color: #111827;
-    font-size: 20px;
+    color: #0F172A;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
+    font-size: 13px;
     font-weight: 700;
 }
 
+/* === TABS === */
 .stTabs [data-baseweb="tab-list"] {
-    background: #F3F4F6;
-    border-radius: 10px;
-    padding: 3px;
-    gap: 2px;
+    background: #F1F5F9;
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+    border: 1px solid #E2E8F0;
 }
 
 .stTabs [data-baseweb="tab"] {
-    border-radius: 8px;
-    color: #6B7280;
-    font-weight: 600;
+    border-radius: 10px;
+    color: #64748B;
+    font-weight: 700;
+    padding: 10px 16px;
+    font-size: 14px;
 }
 
 .stTabs [aria-selected="true"] {
     background: #FFFFFF !important;
-    color: #111827 !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    color: #0F172A !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #CBD5E1 !important;
 }
 
+/* === DATAFRAME === */
 .stDataFrame {
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 2px solid #E2E8F0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.stDataFrame table {
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+}
+
+.stDataFrame thead {
+    background: linear-gradient(to bottom, #F1F5F9, #E2E8F0) !important;
+    font-weight: 700;
+}
+
+.stDataFrame th {
+    color: #0F172A !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    font-size: 11px !important;
+    letter-spacing: 0.8px;
+    border-bottom: 3px solid #CBD5E1 !important;
+    padding: 14px 12px !important;
+}
+
+.stDataFrame tbody tr:nth-child(even) {
+    background-color: #F8FAFC !important;
+}
+
+.stDataFrame tbody tr:nth-child(odd) {
+    background-color: #FFFFFF !important;
+}
+
+.stDataFrame tbody tr:hover {
+    background-color: #F1F5F9 !important;
+}
+
+.stDataFrame td {
+    color: #1E293B !important;
+    font-weight: 600;
+    border-bottom: 1px solid #E2E8F0 !important;
+    padding: 12px !important;
+}
+
+/* === BUTTONS & INPUTS === */
+.stButton button {
+    background: #0F172A;
+    color: #FFFFFF;
+    border-radius: 10px;
+    font-weight: 700;
+    border: none;
+    padding: 10px 20px;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.2);
+}
+
+.stButton button:hover {
+    background: #1E293B;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.3);
+}
+
+/* === ALERT STYLING === */
+.alert-banner {
+    border-radius: 14px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-width: 2px;
 }
 </style>
 """
@@ -271,9 +401,14 @@ def apply_theme_css(mode: str):
 # PLOTLY THEME
 # ══════════════════════════════════════════════
 COLORS = {
-    'blue': '#5B8DEF', 'green': '#3DDFA0', 'red': '#F06A6A',
-    'amber': '#F0B05A', 'purple': '#9B7AEF', 'cyan': '#4FD1D9',
-    'pink': '#F06A9B', 'orange': '#FB923C',
+    'blue': '#3B82F6',      # Brighter blue
+    'green': '#10B981',     # Vibrant green
+    'red': '#EF4444',       # Clear red
+    'amber': '#F59E0B',     # Saturated amber
+    'purple': '#8B5CF6',    # Rich purple
+    'cyan': '#06B6D4',      # Deep cyan
+    'pink': '#EC4899',      # Hot pink
+    'orange': '#F97316',    # Vivid orange
 }
 COLOR_SEQ = list(COLORS.values())
 
@@ -289,13 +424,33 @@ def apply_layout(fig, mode: str, **kwargs):
             **kwargs
         )
     else:
+        # Light mode with high contrast
         fig.update_layout(
             template='plotly_white',
             paper_bgcolor='#FFFFFF',
-            plot_bgcolor='#FFFFFF',
-            font=dict(family='Outfit, sans-serif', color='#374151', size=12),
+            plot_bgcolor='#FAFBFC',
+            font=dict(family='Inter, sans-serif', color='#1E293B', size=12, weight=600),
             margin=dict(l=20, r=20, t=40, b=20),
             colorway=COLOR_SEQ,
+            title=dict(font=dict(size=14, color='#0F172A', weight=700)),
+            xaxis=dict(
+                gridcolor='#E2E8F0',
+                linecolor='#CBD5E1',
+                tickfont=dict(color='#475569', size=11, weight=600),
+                titlefont=dict(color='#1E293B', size=12, weight=700),
+            ),
+            yaxis=dict(
+                gridcolor='#E2E8F0',
+                linecolor='#CBD5E1',
+                tickfont=dict(color='#475569', size=11, weight=600),
+                titlefont=dict(color='#1E293B', size=12, weight=700),
+            ),
+            legend=dict(
+                bgcolor='rgba(255,255,255,0.95)',
+                bordercolor='#E2E8F0',
+                borderwidth=1,
+                font=dict(size=11, color='#475569', weight=600)
+            ),
             **kwargs
         )
     return fig
