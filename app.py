@@ -1046,19 +1046,26 @@ with tab_weekly:
         ftd=('ftd_count', 'sum'),
         ftd_amt=('ftd_amount_usd', 'sum'),
         net_rev=('net_revenue_usd', 'sum'),
+        cpa=('cpa_cost_usd', 'sum'),
+        bonus=('bonus_cost_usd', 'sum'),
+        attempts=('payment_attempts', 'sum'),
+        approved=('payment_approved', 'sum'),
     ).reset_index()
     
     wk['reg2dep'] = wk['ftd'] / wk['regs'].replace(0, np.nan)
+    wk['approval_rate'] = wk['approved'] / wk['attempts'].replace(0, np.nan)
+    wk['ecpa'] = wk['cpa'] / wk['ftd'].replace(0, np.nan)
+    wk['roi'] = ((wk['net_rev'] - wk['cpa'] - wk['bonus']) / (wk['cpa'] + wk['bonus']).replace(0, np.nan))
     wk['period'] = wk['year'].astype(str) + '-W' + wk['week'].astype(str).str.zfill(2)
-    wk = wk.sort_values(['year', 'week'])
+    wk = wk.sort_values(['year', 'week'], ascending=False)
     
     col_w1, col_w2 = st.columns(2)
     
     with col_w1:
         fig_wv = make_subplots(specs=[[{"secondary_y": True}]])
-        fig_wv.add_trace(go.Bar(x=wk['period'], y=wk['regs'], name='Registrations',
+        fig_wv.add_trace(go.Bar(x=wk['period'][::-1], y=wk['regs'][::-1], name='Registrations',
                                 marker_color=COLORS['blue'], opacity=0.5), secondary_y=False)
-        fig_wv.add_trace(go.Scatter(x=wk['period'], y=wk['ftd'], name='FTD',
+        fig_wv.add_trace(go.Scatter(x=wk['period'][::-1], y=wk['ftd'][::-1], name='FTD',
                                     line=dict(color=COLORS['green'], width=2.5)), secondary_y=True)
         apply_layout(fig_wv, MODE, title='Weekly Volume')
         fig_wv.update_yaxes(title_text="Registrations", secondary_y=False)
@@ -1067,16 +1074,96 @@ with tab_weekly:
     
     with col_w2:
         fig_wr = go.Figure()
-        fig_wr.add_trace(go.Bar(x=wk['period'], y=wk['net_rev'], name='Net Revenue',
+        fig_wr.add_trace(go.Bar(x=wk['period'][::-1], y=wk['net_rev'][::-1], name='Net Revenue',
                                 marker_color=COLORS['green']))
         apply_layout(fig_wr, MODE, title='Weekly Revenue')
         st.plotly_chart(fig_wr, use_container_width=True, config={'displayModeBar': False})
+    
+    # ════════════════════════════════════════════════════════════
+    # WEEKLY SUMMARY TABLE
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">📊 Weekly Summary</div>', unsafe_allow_html=True)
+    
+    wk_display = wk[['period', 'regs', 'ftd', 'reg2dep', 'ftd_amt', 'approval_rate', 'net_rev', 'ecpa', 'roi']].copy()
+    wk_display.columns = ['Week', 'Regs', 'FTD', 'Reg2Dep', 'FTD Amt $', 'Approval %', 'Net Rev $', 'eCPA $', 'ROI']
+    
+    st.dataframe(
+        wk_display.style.format({
+            'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep': '{:.1%}',
+            'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1%}',
+            'Net Rev $': '${:,.0f}', 'eCPA $': '${:.0f}', 'ROI': '{:.1%}'
+        }).background_gradient(subset=['Reg2Dep'], cmap='RdYlGn', vmin=0, vmax=0.25)
+         .background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=0.5, vmax=0.95)
+         .background_gradient(subset=['ROI'], cmap='RdYlGn', vmin=-0.5, vmax=0.5),
+        use_container_width=True, hide_index=True, height=500,
+    )
 
 # ═══════════════════════════════════════════════════
 # TAB 4: PAYMENT & CONVERSION HEALTH
 # ═══════════════════════════════════════════════════
 with tab_payments:
     st.markdown('<div class="sec-label">Payment & Conversion Health</div>', unsafe_allow_html=True)
+    
+    # ════════════════════════════════════════════════════════════
+    # CURRENT HOUR APPROVAL RATE ALERT
+    # ════════════════════════════════════════════════════════════
+    try:
+        # Get current hour data (using latest hour in dataset as "current")
+        pm = df_payments[
+            (df_payments['date'].dt.date >= start_date) &
+            (df_payments['date'].dt.date <= end_date) &
+            (df_payments['geo'].isin(selected_geos))
+        ].copy()
+        
+        if not pm.empty:
+            # Get latest hour
+            latest_date = pm['date'].max()
+            current_hour_data = pm[pm['date'] == latest_date]
+            
+            if not current_hour_data.empty:
+                hour_attempts = current_hour_data['txn_count'].sum()
+                hour_approved = current_hour_data['approved_count'].sum()
+                hour_ar = safe_div(hour_approved, hour_attempts)
+                
+                # Determine status
+                if hour_ar >= 0.85:
+                    status = "🟢 HEALTHY"
+                    alert_color = COLORS['green']
+                    bg_color = '#0E2D20' if MODE == 'dark' else '#F0FDF4'
+                elif hour_ar >= 0.75:
+                    status = "🟡 WARNING"
+                    alert_color = COLORS['amber']
+                    bg_color = '#2D1F0E' if MODE == 'dark' else '#FFFBEB'
+                else:
+                    status = "🔴 CRITICAL"
+                    alert_color = COLORS['red']
+                    bg_color = '#2D0E0E' if MODE == 'dark' else '#FEF2F2'
+                
+                st.markdown(f"""
+                <div style="
+                    background: {bg_color};
+                    border: 2px solid {alert_color};
+                    border-radius: 12px;
+                    padding: 20px 24px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                ">
+                    <div style="font-size: 11px; color: #8B90AD; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                        Current Hour Approval Rate
+                    </div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; color: {alert_color}; margin-bottom: 8px;">
+                        {hour_ar*100:.1f}%
+                    </div>
+                    <div style="font-size: 18px; font-weight: 600; color: {alert_color}; margin-bottom: 12px;">
+                        {status}
+                    </div>
+                    <div style="font-size: 13px; color: #8B90AD;">
+                        {int(hour_attempts)} attempts · {latest_date.strftime('%Y-%m-%d %H:00')}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+    except Exception as e:
+        st.info("Current hour data unavailable")
     
     st.markdown("#### Payment Funnel")
     funnel_cols = st.columns(6)
@@ -1100,19 +1187,99 @@ with tab_payments:
     with funnel_cols[5]:
         st.metric("Reg→FTD", fmt_pct(safe_div(ftd, regs)))
     
-    st.markdown('<div class="sec-label">Payment Approval Trend</div>', unsafe_allow_html=True)
+    # ════════════════════════════════════════════════════════════
+    # APPROVAL RATE TRENDS
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">📈 Approval Rate Analysis</div>', unsafe_allow_html=True)
     
-    trend = df.groupby('date').agg(
-        attempts=('payment_attempts', 'sum'),
-        approved=('payment_approved', 'sum'),
-    ).reset_index()
-    trend['approval_rate'] = trend['approved'] / trend['attempts'].replace(0, np.nan)
+    ar_col1, ar_col2 = st.columns(2)
     
-    fig_ap = go.Figure()
-    fig_ap.add_trace(go.Scatter(x=trend['date'], y=trend['approval_rate'],
-                                name='Approval Rate', line=dict(color=COLORS['green'], width=2)))
-    apply_layout(fig_ap, MODE, title='Daily Approval Rate', yaxis_tickformat='.0%')
-    st.plotly_chart(fig_ap, use_container_width=True, config={'displayModeBar': False})
+    with ar_col1:
+        # Daily Approval Rate Trend
+        trend = df.groupby('date').agg(
+            attempts=('payment_attempts', 'sum'),
+            approved=('payment_approved', 'sum'),
+        ).reset_index()
+        trend['approval_rate'] = trend['approved'] / trend['attempts'].replace(0, np.nan)
+        trend['ma7'] = trend['approval_rate'].rolling(7, min_periods=1).mean()
+        
+        fig_ap = go.Figure()
+        fig_ap.add_trace(go.Scatter(x=trend['date'], y=trend['approval_rate'],
+                                    name='Daily AR', line=dict(color=COLORS['green'], width=1), opacity=0.4))
+        fig_ap.add_trace(go.Scatter(x=trend['date'], y=trend['ma7'],
+                                    name='7-day MA', line=dict(color=COLORS['green'], width=2.5)))
+        fig_ap.add_hline(y=0.85, line_dash="dot", line_color=COLORS['amber'], 
+                         annotation_text="Target 85%")
+        apply_layout(fig_ap, MODE, title='Daily Approval Rate', yaxis_tickformat='.0%')
+        st.plotly_chart(fig_ap, use_container_width=True, config={'displayModeBar': False})
+    
+    with ar_col2:
+        # AR by Payment Method
+        if not pm.empty:
+            pm_method = pm.groupby('payment_method').agg(
+                Attempts=('txn_count', 'sum'),
+                Approved=('approved_count', 'sum'),
+            ).reset_index()
+            pm_method['AR'] = pm_method['Approved'] / pm_method['Attempts'].replace(0, np.nan)
+            pm_method = pm_method.sort_values('AR', ascending=True)
+            
+            # Color by performance
+            colors = pm_method['AR'].apply(lambda x: COLORS['green'] if x >= 0.85 
+                                           else COLORS['amber'] if x >= 0.75 
+                                           else COLORS['red']).tolist()
+            
+            fig_pm = go.Figure()
+            fig_pm.add_trace(go.Bar(
+                y=pm_method['payment_method'], x=pm_method['AR'],
+                orientation='h', marker_color=colors,
+                text=pm_method['AR'].apply(lambda x: f"{x:.1%}" if pd.notna(x) else ""),
+                textposition='outside',
+            ))
+            fig_pm.add_vline(x=0.85, line_dash="dot", line_color=COLORS['amber'],
+                            annotation_text="Target")
+            apply_layout(fig_pm, MODE, title='AR by Payment Method', xaxis_tickformat='.0%')
+            st.plotly_chart(fig_pm, use_container_width=True, config={'displayModeBar': False})
+    
+    # ════════════════════════════════════════════════════════════
+    # STATUS BREAKDOWN
+    # ════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-label">📊 Payment Status Breakdown (Daily)</div>', unsafe_allow_html=True)
+    
+    if not pm.empty:
+        # Daily status breakdown
+        status_daily = pm.groupby('date').agg(
+            Approved=('approved_count', 'sum'),
+            Declined=('declined_count', 'sum'),
+            Pending=('pending_count', 'sum'),
+        ).reset_index()
+        
+        fig_status = go.Figure()
+        fig_status.add_trace(go.Bar(x=status_daily['date'], y=status_daily['Approved'],
+                                   name='Approved', marker_color=COLORS['green']))
+        fig_status.add_trace(go.Bar(x=status_daily['date'], y=status_daily['Declined'],
+                                   name='Declined', marker_color=COLORS['red']))
+        fig_status.add_trace(go.Bar(x=status_daily['date'], y=status_daily['Pending'],
+                                   name='Pending', marker_color=COLORS['amber']))
+        
+        apply_layout(fig_status, MODE, title='Payment Status Breakdown', barmode='stack')
+        st.plotly_chart(fig_status, use_container_width=True, config={'displayModeBar': False})
+        
+        # Status summary
+        total_approved = int(status_daily['Approved'].sum())
+        total_declined = int(status_daily['Declined'].sum())
+        total_pending = int(status_daily['Pending'].sum())
+        total = total_approved + total_declined + total_pending
+        
+        status_cols = st.columns(3)
+        with status_cols[0]:
+            st.metric("✅ Approved", f"{fmt_num(total_approved)}", 
+                     f"{(total_approved/total*100):.1f}%" if total > 0 else "0%")
+        with status_cols[1]:
+            st.metric("❌ Declined", f"{fmt_num(total_declined)}", 
+                     f"{(total_declined/total*100):.1f}%" if total > 0 else "0%")
+        with status_cols[2]:
+            st.metric("⏳ Pending", f"{fmt_num(total_pending)}", 
+                     f"{(total_pending/total*100):.1f}%" if total > 0 else "0%")
 
 # ═══════════════════════════════════════════════════
 # TAB 5: TRAFFIC & AGENT EFFICIENCY
@@ -1124,22 +1291,162 @@ with tab_agents:
     if a.empty:
         st.info("Немає даних за вибраними фільтрами.")
     else:
+        # ════════════════════════════════════════════════════════════
+        # TOP PERFORMERS & KEY METRICS
+        # ════════════════════════════════════════════════════════════
         agg = a.groupby('agent', as_index=False).agg(
             Clicks=('clicks','sum'),
             Regs=('registrations','sum'),
             FTD=('ftd_count','sum'),
             FTD_Amt=('ftd_amount_usd','sum'),
+            Net_Rev=('net_revenue_usd','sum'),
+            CPA=('cpa_cost_usd','sum'),
+            Attempts=('payment_attempts','sum'),
+            Approved=('payment_approved','sum'),
         )
         
         agg['Reg2FTD %'] = agg['FTD'] / agg['Regs'].replace(0, np.nan)
         agg['Click2Reg %'] = agg['Regs'] / agg['Clicks'].replace(0, np.nan)
+        agg['Approval %'] = agg['Approved'] / agg['Attempts'].replace(0, np.nan)
+        agg['ROI'] = ((agg['Net_Rev'] - agg['CPA']) / agg['CPA'].replace(0, np.nan))
+        agg['eCPA'] = agg['CPA'] / agg['FTD'].replace(0, np.nan)
         agg = agg.sort_values('FTD_Amt', ascending=False)
+        
+        # Top 3 Performers
+        top3_cols = st.columns(3)
+        for i, row in agg.head(3).iterrows():
+            with top3_cols[i % 3]:
+                medal = ["🥇", "🥈", "🥉"][i % 3]
+                st.markdown(f"""
+                <div style="
+                    background: {'#131730' if MODE == 'dark' else '#FFFFFF'};
+                    border: 2px solid {COLORS['green']};
+                    border-radius: 12px;
+                    padding: 16px;
+                    text-align: center;
+                    margin-bottom: 16px;
+                ">
+                    <div style="font-size: 32px; margin-bottom: 8px;">{medal}</div>
+                    <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">{row['agent']}</div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 20px; color: {COLORS['green']}; font-weight: 700;">
+                        {fmt_money(row['FTD_Amt'])}
+                    </div>
+                    <div style="font-size: 12px; color: #8B90AD; margin-top: 8px;">
+                        {int(row['FTD'])} FTD · {row['Reg2FTD %']:.1%} CR
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        # ════════════════════════════════════════════════════════════
+        # AGENT PERFORMANCE CHARTS
+        # ════════════════════════════════════════════════════════════
+        st.markdown('<div class="sec-label">📊 Agent Performance Analysis</div>', unsafe_allow_html=True)
+        
+        perf_col1, perf_col2 = st.columns(2)
+        
+        with perf_col1:
+            # Top 10 by Revenue
+            top10_rev = agg.head(10).sort_values('Net_Rev', ascending=True)
+            
+            fig_rev = go.Figure()
+            fig_rev.add_trace(go.Bar(
+                y=top10_rev['agent'], x=top10_rev['Net_Rev'],
+                orientation='h', marker_color=COLORS['green'],
+                text=top10_rev['Net_Rev'].apply(lambda x: fmt_money(x)),
+                textposition='outside',
+            ))
+            apply_layout(fig_rev, MODE, title='Top 10 Agents by Revenue')
+            st.plotly_chart(fig_rev, use_container_width=True, config={'displayModeBar': False})
+        
+        with perf_col2:
+            # Conversion Rate vs Volume (scatter)
+            fig_scatter = go.Figure()
+            fig_scatter.add_trace(go.Scatter(
+                x=agg['Regs'], y=agg['Reg2FTD %'],
+                mode='markers',
+                marker=dict(
+                    size=agg['FTD_Amt']/agg['FTD_Amt'].max()*50 + 10,
+                    color=agg['ROI'],
+                    colorscale='RdYlGn',
+                    showscale=True,
+                    colorbar=dict(title="ROI"),
+                ),
+                text=agg['agent'],
+                hovertemplate='<b>%{text}</b><br>Regs: %{x}<br>CR: %{y:.1%}<extra></extra>'
+            ))
+            apply_layout(fig_scatter, MODE, title='Agent Performance Matrix: Volume vs Conversion',
+                        yaxis_tickformat='.0%')
+            st.plotly_chart(fig_scatter, use_container_width=True, config={'displayModeBar': False})
+        
+        # ════════════════════════════════════════════════════════════
+        # TRAFFIC SOURCE BREAKDOWN BY AGENT
+        # ════════════════════════════════════════════════════════════
+        st.markdown('<div class="sec-label">📡 Traffic Mix by Top Agents</div>', unsafe_allow_html=True)
+        
+        # Get top 5 agents
+        top5_agents = agg.head(5)['agent'].tolist()
+        agent_source = a[a['agent'].isin(top5_agents)].groupby(['agent', 'traffic_source']).agg(
+            Regs=('registrations', 'sum')
+        ).reset_index()
+        
+        fig_mix = px.bar(
+            agent_source, x='agent', y='Regs', color='traffic_source',
+            color_discrete_sequence=COLOR_SEQ,
+            barmode='stack'
+        )
+        apply_layout(fig_mix, MODE, title='Traffic Source Mix (Top 5 Agents)')
+        st.plotly_chart(fig_mix, use_container_width=True, config={'displayModeBar': False})
+        
+        # ════════════════════════════════════════════════════════════
+        # FULL AGENT TABLE
+        # ════════════════════════════════════════════════════════════
+        st.markdown('<div class="sec-label">📋 Complete Agent Leaderboard</div>', unsafe_allow_html=True)
         
         st.dataframe(
             agg.style.format({
                 'Clicks':'{:,.0f}','Regs':'{:,.0f}','FTD':'{:,.0f}',
-                'Click2Reg %':'{:.1%}','Reg2FTD %':'{:.1%}',
-                'FTD_Amt':'${:,.0f}'
-            }).background_gradient(subset=['Reg2FTD %'], cmap='RdYlGn', vmin=0, vmax=0.20),
-            use_container_width=True, hide_index=True
+                'Click2Reg %':'{:.1%}','Reg2FTD %':'{:.1%}','Approval %':'{:.1%}',
+                'FTD_Amt':'${:,.0f}','Net_Rev':'${:,.0f}','eCPA':'${:,.0f}','ROI':'{:.1%}'
+            }).background_gradient(subset=['Reg2FTD %'], cmap='RdYlGn', vmin=0, vmax=0.20)
+             .background_gradient(subset=['ROI'], cmap='RdYlGn', vmin=-0.5, vmax=0.5)
+             .background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=0.6, vmax=0.95),
+            use_container_width=True, hide_index=True, height=500
         )
+        
+        # ════════════════════════════════════════════════════════════
+        # AGENT TRENDS (Optional Deep Dive)
+        # ════════════════════════════════════════════════════════════
+        st.markdown('<div class="sec-label">🔍 Agent Deep Dive (Optional)</div>', unsafe_allow_html=True)
+        
+        selected_agent = st.selectbox("Select agent for detailed analysis:", 
+                                      [''] + sorted(a['agent'].dropna().unique().tolist()))
+        
+        if selected_agent:
+            agent_data = a[a['agent'] == selected_agent].groupby('date').agg(
+                Regs=('registrations', 'sum'),
+                FTD=('ftd_count', 'sum'),
+                Revenue=('net_revenue_usd', 'sum'),
+            ).reset_index()
+            agent_data['Reg2FTD'] = agent_data['FTD'] / agent_data['Regs'].replace(0, np.nan)
+            
+            deep_col1, deep_col2 = st.columns(2)
+            
+            with deep_col1:
+                fig_agent_vol = go.Figure()
+                fig_agent_vol.add_trace(go.Bar(x=agent_data['date'], y=agent_data['Regs'],
+                                              name='Regs', marker_color=COLORS['blue']))
+                fig_agent_vol.add_trace(go.Scatter(x=agent_data['date'], y=agent_data['FTD'],
+                                                   name='FTD', line=dict(color=COLORS['green'], width=2),
+                                                   yaxis='y2'))
+                apply_layout(fig_agent_vol, MODE, title=f'{selected_agent} - Volume Trend')
+                fig_agent_vol.update_layout(yaxis2=dict(overlaying='y', side='right'))
+                st.plotly_chart(fig_agent_vol, use_container_width=True, config={'displayModeBar': False})
+            
+            with deep_col2:
+                fig_agent_cr = go.Figure()
+                fig_agent_cr.add_trace(go.Scatter(x=agent_data['date'], y=agent_data['Reg2FTD'],
+                                                  line=dict(color=COLORS['purple'], width=2),
+                                                  fill='tozeroy'))
+                apply_layout(fig_agent_cr, MODE, title=f'{selected_agent} - Conversion Rate',
+                            yaxis_tickformat='.0%')
+                st.plotly_chart(fig_agent_cr, use_container_width=True, config={'displayModeBar': False})
