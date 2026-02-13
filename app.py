@@ -414,45 +414,36 @@ COLOR_SEQ = list(COLORS.values())
 
 def apply_layout(fig, mode: str, **kwargs):
     if mode == "dark":
-        fig.update_layout(
+        base_layout = dict(
             template='plotly_dark',
             paper_bgcolor='#131730',
             plot_bgcolor='#131730',
             font=dict(family='Outfit, sans-serif', color='#8B90AD', size=12),
             margin=dict(l=20, r=20, t=40, b=20),
             colorway=COLOR_SEQ,
-            **kwargs
         )
     else:
         # Light mode with high contrast
-        fig.update_layout(
+        base_layout = dict(
             template='plotly_white',
             paper_bgcolor='#FFFFFF',
             plot_bgcolor='#FAFBFC',
             font=dict(family='Inter, sans-serif', color='#1E293B', size=12),
             margin=dict(l=20, r=20, t=40, b=20),
             colorway=COLOR_SEQ,
-            title=dict(font=dict(size=14, color='#0F172A')),
             xaxis=dict(
                 gridcolor='#E2E8F0',
                 linecolor='#CBD5E1',
-                tickfont=dict(color='#475569', size=11),
-                titlefont=dict(color='#1E293B', size=12),
             ),
             yaxis=dict(
                 gridcolor='#E2E8F0',
                 linecolor='#CBD5E1',
-                tickfont=dict(color='#475569', size=11),
-                titlefont=dict(color='#1E293B', size=12),
             ),
-            legend=dict(
-                bgcolor='rgba(255,255,255,0.95)',
-                bordercolor='#E2E8F0',
-                borderwidth=1,
-                font=dict(size=11, color='#475569')
-            ),
-            **kwargs
         )
+    
+    # Merge with kwargs
+    base_layout.update(kwargs)
+    fig.update_layout(**base_layout)
     return fig
 
 # ══════════════════════════════════════════════
