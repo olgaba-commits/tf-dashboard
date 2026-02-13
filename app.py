@@ -453,6 +453,69 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 </style>
 """
 
+LIGHT_TABLE_CSS = """
+<style>
+/* ─────────────────────────────────────────────────────────────
+   LIGHT MODE — SaaS table (Stripe/HubSpot-ish)
+   Scoped via .theme-light so it never affects Dark Mode.
+   ───────────────────────────────────────────────────────────── */
+.theme-light .saas-table-card{
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(15,23,42,0.08);
+    overflow: auto;
+}
+
+/* The actual HTML table (pandas Styler output) */
+.theme-light table.saas-table{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    color: #334155;
+}
+
+.theme-light table.saas-table thead th{
+    position: sticky;
+    top: 0;
+    background: #F8FAFC;
+    color: #0F172A;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 800;
+    padding: 12px 14px;
+    border-bottom: 1px solid #E2E8F0;
+    white-space: nowrap;
+}
+
+.theme-light table.saas-table tbody td{
+    padding: 12px 14px;
+    border-bottom: 1px solid #E2E8F0;
+    font-weight: 600;
+    color: #334155;
+    white-space: nowrap;
+}
+
+.theme-light table.saas-table tbody tr:nth-child(odd) td{ background: #FFFFFF; }
+.theme-light table.saas-table tbody tr:nth-child(even) td{ background: #F8FAFC; }
+.theme-light table.saas-table tbody tr:hover td{ background: #EEF2FF; }
+
+.theme-light table.saas-table tbody tr:last-child td{
+    border-bottom: none;
+}
+
+/* Nice scrollbars */
+.theme-light .saas-table-card::-webkit-scrollbar{ height: 10px; width: 10px; }
+.theme-light .saas-table-card::-webkit-scrollbar-thumb{ background: rgba(148,163,184,0.55); border-radius: 999px; }
+.theme-light .saas-table-card::-webkit-scrollbar-track{ background: rgba(226,232,240,0.6); border-radius: 999px; }
+</style>
+"""
+
+
+
 def apply_theme_css(mode: str):
     st.markdown(DARK_CSS if mode == "dark" else LIGHT_CSS, unsafe_allow_html=True)
 
@@ -607,12 +670,16 @@ COLORS = COLORS_DARK if MODE == "dark" else COLORS_LIGHT
 COLOR_SEQ = list(COLORS.values())
 
 # Softer heatmap for light mode (less aggressive, text remains readable)
+# Softer heatmap for light mode (pastel, readable text)
 HEATMAP_CMAP_LIGHT = LinearSegmentedColormap.from_list(
-    "pastel_rdygn",
-    ["#FEECEC", "#FFF7ED", "#ECFDF5"],  # soft red -> amber -> green
+    "pastel_rdg",
+    ["#FEE2E2", "#FCA5A5", "#FFF7ED", "#DCFCE7", "#86EFAC"],  # red → neutral → green
 )
 HEATMAP_CMAP = HEATMAP_CMAP_LIGHT if MODE == "light" else "RdYlGn"
 
+# Inject table-only styles for LIGHT mode (do NOT touch Dark Mode)
+if MODE == "light":
+    st.markdown(LIGHT_TABLE_CSS, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════
 # FILTER DATA
@@ -659,6 +726,31 @@ def pct_change(current, previous):
     if previous == 0:
         return 0
     return (current - previous) / previous
+
+def render_light_table(styler: pd.io.formats.style.Styler, *, height: int | None = None):
+    """Render a SaaS-looking table ONLY for light mode.
+
+    Dark mode remains on st.dataframe (interactive) and is unchanged.
+    """
+    # Hide index (compat between pandas versions)
+    try:
+        styler = styler.hide(axis="index")
+    except Exception:
+        try:
+            styler = styler.hide_index()
+        except Exception:
+            pass
+
+    # Force a stable class for our scoped CSS
+    styler = styler.set_table_attributes('class="saas-table"')
+
+    max_h = f"max-height:{int(height)}px;" if height else ""
+    html = styler.to_html()
+
+    st.markdown(
+        f'<div class="theme-light"><div class="saas-table-card" style="{max_h}">{html}</div></div>',
+        unsafe_allow_html=True
+    )
 
 def scorecard_html(label, value, change_pct, sub_text="", accent_color="#5B8DEF"):
     direction = "up" if change_pct >= 0 else "down"
@@ -1007,14 +1099,21 @@ with tab_exec:
     geo_display = geo_table[display_cols].sort_values('FTD_Amount', ascending=False)
     geo_display.columns = ['GEO', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Approval %', 'Net Rev $', 'eCPA $']
 
-    st.dataframe(
+    geo_styler = (
         geo_display.style.format({
-            'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep %': '{:.1f}%',
-            'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1f}%', 
-            'Net Rev $': '${:,.0f}', 'eCPA $': '${:.0f}'
-        }).background_gradient(subset=['Reg2Dep %'], cmap=HEATMAP_CMAP, vmin=0, vmax=25),
-        use_container_width=True, hide_index=True,
+            'Regs': '{:,0f}', 'FTD': '{:,0f}', 'Reg2Dep %': '{:.1f}%',
+            'FTD Amt $': '${:,0f}', 'Approval %': '{:.1f}%', 
+            'Net Rev $': '${:,0f}', 'eCPA $': '${:.0f}'
+        })
+        .background_gradient(subset=['Reg2Dep %'], cmap=HEATMAP_CMAP, vmin=0, vmax=25)
     )
+
+    if MODE == "dark":
+        # ✅ Dark Mode: keep existing interactive dataframe (unchanged)
+        st.dataframe(geo_styler, use_container_width=True, hide_index=True)
+    else:
+        # ✅ Light Mode: render HTML table for full SaaS styling
+        render_light_table(geo_styler)
     
     # ════════════════════════════════════════════════════════════
     # ADVANCED BREAKDOWNS
@@ -1315,16 +1414,26 @@ with tab_daily:
     display_daily = daily_tbl[['date', 'Day', 'Regs', 'FTD', 'Reg2Dep', 'FTD_Amt', 'Approval', 'Net_Rev']].head(30)
     display_daily.columns = ['Date', 'Day', 'Regs', 'FTD', 'Reg2Dep %', 'FTD Amt $', 'Approval %', 'Net Rev $']
 
-    st.dataframe(
+    daily_styler = (
         display_daily.style.format({
-            'Date': lambda x: x.strftime('%Y-%m-%d'), 
-            'Regs': '{:,.0f}', 'FTD': '{:,.0f}',
-            'Reg2Dep %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 
-            'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}'
-        }).background_gradient(subset=['Reg2Dep %'], cmap=HEATMAP_CMAP, vmin=0, vmax=25)
-         .background_gradient(subset=['Approval %'], cmap=HEATMAP_CMAP, vmin=50, vmax=95),
-        use_container_width=True, hide_index=True, height=500,
+            'Date': lambda x: x.strftime('%b %d'),
+            'Regs': '{:,.0f}',
+            'FTD': '{:,.0f}',
+            'Reg2Dep %': '{:.1f}%',
+            'FTD Amt $': '${:,.0f}',
+            'Approval %': '{:.1f}%',
+            'Net Rev $': '${:,.0f}'
+        })
+        .background_gradient(subset=['Reg2Dep %'], cmap=HEATMAP_CMAP, vmin=0, vmax=25)
+        .background_gradient(subset=['Approval %'], cmap=HEATMAP_CMAP, vmin=50, vmax=95)
     )
+
+    if MODE == "dark":
+        # ✅ Dark Mode: keep existing interactive dataframe (unchanged)
+        st.dataframe(daily_styler, use_container_width=True, hide_index=True, height=500)
+    else:
+        # ✅ Light Mode: render HTML table for full SaaS styling
+        render_light_table(daily_styler, height=500)
 
 # ═══════════════════════════════════════════════════
 # TAB 3: WEEKLY TRENDS
@@ -1383,16 +1492,23 @@ with tab_weekly:
     wk_display = wk[['period', 'regs', 'ftd', 'reg2dep', 'ftd_amt', 'approval_rate', 'net_rev', 'ecpa', 'roi']].copy()
     wk_display.columns = ['Week', 'Regs', 'FTD', 'Reg2Dep', 'FTD Amt $', 'Approval %', 'Net Rev $', 'eCPA $', 'ROI']
     
-    st.dataframe(
+    wk_styler = (
         wk_display.style.format({
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep': '{:.1%}',
             'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1%}',
             'Net Rev $': '${:,.0f}', 'eCPA $': '${:.0f}', 'ROI': '{:.1%}'
-        }).background_gradient(subset=['Reg2Dep'], cmap=HEATMAP_CMAP, vmin=0, vmax=0.25)
-         .background_gradient(subset=['Approval %'], cmap=HEATMAP_CMAP, vmin=0.5, vmax=0.95)
-         .background_gradient(subset=['ROI'], cmap=HEATMAP_CMAP, vmin=-0.5, vmax=0.5),
-        use_container_width=True, hide_index=True, height=500,
+        })
+        .background_gradient(subset=['Reg2Dep'], cmap=HEATMAP_CMAP, vmin=0, vmax=0.25)
+        .background_gradient(subset=['Approval %'], cmap=HEATMAP_CMAP, vmin=0.5, vmax=0.95)
+        .background_gradient(subset=['ROI'], cmap=HEATMAP_CMAP, vmin=-0.5, vmax=0.5)
     )
+
+    if MODE == "dark":
+        # ✅ Dark Mode: keep existing interactive dataframe (unchanged)
+        st.dataframe(wk_styler, use_container_width=True, hide_index=True, height=500)
+    else:
+        # ✅ Light Mode: render HTML table for full SaaS styling
+        render_light_table(wk_styler, height=500)
 
 # ═══════════════════════════════════════════════════
 # TAB 4: PAYMENT & CONVERSION HEALTH
