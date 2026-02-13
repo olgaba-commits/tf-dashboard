@@ -20,7 +20,7 @@ st.set_page_config(
 # THEME TOGGLE (Light / Dark)
 # ══════════════════════════════════════════════
 if "theme_mode" not in st.session_state:
-    st.session_state.theme_mode = "dark"
+    st.session_state.theme_mode = "light"
 
 # ══════════════════════════════════════════════
 # THEME STYLES (CSS)
@@ -145,187 +145,234 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 
 LIGHT_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root { color-scheme: light; }
 
+/* ═══ BASE ═══ */
 .stApp {
-    background: linear-gradient(to bottom, #F8FAFC 0%, #F1F5F9 100%);
+    background: #F4F6FB;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #0F172A;
+    color: #1A1D2E;
 }
 
+/* ═══ SIDEBAR ═══ */
 section[data-testid="stSidebar"] {
     background: #FFFFFF;
-    border-right: 1px solid #CBD5E1;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+    border-right: 1px solid #E5E9F2;
+}
+
+section[data-testid="stSidebar"] > div:first-child {
+    padding-top: 1.5rem;
 }
 
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3 {
-    color: #0F172A;
+    color: #1A1D2E;
     font-weight: 700;
 }
 
 section[data-testid="stSidebar"] label {
-    color: #475569 !important;
+    color: #5A6178 !important;
     font-weight: 600 !important;
-    font-size: 13px !important;
+    font-size: 12.5px !important;
+    letter-spacing: 0.2px;
 }
 
-/* === HEADER === */
+section[data-testid="stSidebar"] hr {
+    border-color: #EDF0F7;
+    margin: 0.75rem 0;
+}
+
+section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {
+    background: #EEF2FF;
+    color: #4338CA;
+    border: 1px solid #C7D2FE;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+section[data-testid="stSidebar"] [data-baseweb="select"] > div {
+    border-color: #E2E6F0;
+    border-radius: 10px;
+    background: #FAFBFE;
+}
+
+section[data-testid="stSidebar"] [data-baseweb="input"] {
+    border-color: #E2E6F0;
+    border-radius: 10px;
+    background: #FAFBFE;
+}
+
+/* ═══ HEADER ═══ */
 .main-header {
-    background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
-    border: 2px solid #CBD5E1;
+    background: #FFFFFF;
+    border: 1px solid #E5E9F2;
     border-radius: 16px;
-    padding: 28px 32px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    padding: 26px 30px;
+    margin-bottom: 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02);
 }
 
 .main-header h1 {
     font-family: 'Inter', sans-serif;
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 800;
-    color: #0F172A;
-    letter-spacing: -0.8px;
+    color: #1A1D2E;
+    letter-spacing: -0.6px;
     margin: 0;
 }
 
-.main-header .subtitle {
-    font-size: 14px;
-    color: #64748B;
-    margin-top: 6px;
+.main-header .subtitle,
+.main-header p {
+    font-size: 13.5px;
+    color: #7C839E !important;
+    margin-top: 5px;
     font-weight: 500;
 }
 
-/* === SCORECARD === */
+/* ═══ SCORECARD ═══ */
 .score-card {
     background: #FFFFFF;
-    border: 2px solid #E2E8F0;
-    border-radius: 16px;
+    border: 1px solid #E5E9F2;
+    border-radius: 14px;
     padding: 20px 22px 18px;
     height: 100%;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
 }
 
 .score-card:hover {
-    border-color: #CBD5E1;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border-color: #D1D6E6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
 }
 
 .sc-label {
-    font-size: 11px;
-    color: #64748B;
+    font-size: 10.5px;
+    color: #8B90AD;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.9px;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .sc-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 28px;
-    font-weight: 800;
-    color: #0F172A;
-    margin-bottom: 10px;
-    letter-spacing: -1px;
+    font-size: 26px;
+    font-weight: 700;
+    color: #1A1D2E;
+    margin-bottom: 8px;
+    letter-spacing: -0.8px;
 }
 
 .sc-compare {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: 6px;
 }
-.sc-compare.up { color: #10B981; }
-.sc-compare.down { color: #EF4444; }
+.sc-compare.up { color: #059669; background: #ECFDF5; }
+.sc-compare.down { color: #DC2626; background: #FEF2F2; }
 
 .sc-sub {
     font-size: 11px;
-    color: #94A3B8;
+    color: #9CA3BD;
     margin-top: 6px;
     font-weight: 500;
 }
 
-/* === SECTION LABEL === */
+/* ═══ SECTION LABEL ═══ */
 .sec-label {
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 1.8px;
-    color: #475569;
-    font-weight: 800;
-    margin: 28px 0 16px;
+    letter-spacing: 1.6px;
+    color: #6B7194;
+    font-weight: 700;
+    margin: 28px 0 14px;
     padding-bottom: 10px;
-    border-bottom: 3px solid #E2E8F0;
+    border-bottom: 2px solid #E5E9F2;
 }
 
-/* === METRICS === */
+/* ═══ METRICS ═══ */
 div[data-testid="stMetric"] {
     background: #FFFFFF;
-    border: 2px solid #E2E8F0;
-    border-radius: 14px;
+    border: 1px solid #E5E9F2;
+    border-radius: 12px;
     padding: 14px 18px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     transition: all .2s;
 }
 
 div[data-testid="stMetric"]:hover {
-    border-color: #CBD5E1;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-color: #D1D6E6;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
 }
 
 div[data-testid="stMetric"] label {
-    color: #64748B !important;
-    font-size: 11px !important;
+    color: #8B90AD !important;
+    font-size: 10.5px !important;
     font-weight: 700 !important;
     text-transform: uppercase;
-    letter-spacing: 0.9px;
+    letter-spacing: 0.8px;
 }
 
 div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     font-family: 'JetBrains Mono', monospace;
-    color: #0F172A;
-    font-size: 22px;
-    font-weight: 800;
+    color: #1A1D2E;
+    font-size: 21px;
+    font-weight: 700;
 }
 
 div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
 }
 
-/* === TABS === */
+/* ═══ TABS ═══ */
 .stTabs [data-baseweb="tab-list"] {
-    background: #F1F5F9;
+    background: #EBEEF5;
     border-radius: 12px;
     padding: 4px;
-    gap: 4px;
-    border: 1px solid #E2E8F0;
+    gap: 3px;
+    border: none;
 }
 
 .stTabs [data-baseweb="tab"] {
-    border-radius: 10px;
-    color: #64748B;
-    font-weight: 700;
-    padding: 10px 16px;
-    font-size: 14px;
+    border-radius: 9px;
+    color: #7C839E;
+    font-weight: 600;
+    padding: 9px 16px;
+    font-size: 13.5px;
+    transition: all .15s;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: #4B5169;
+    background: rgba(255,255,255,0.5);
 }
 
 .stTabs [aria-selected="true"] {
     background: #FFFFFF !important;
-    color: #0F172A !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border: 1px solid #CBD5E1 !important;
+    color: #1A1D2E !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border: none !important;
 }
 
-/* === DATAFRAME === */
+/* ═══ DATAFRAME ═══ */
 .stDataFrame {
-    border-radius: 14px;
+    border-radius: 12px;
     overflow: hidden;
-    border: 2px solid #E2E8F0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid #E5E9F2;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
 }
 
 .stDataFrame table {
@@ -334,22 +381,21 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 }
 
 .stDataFrame thead {
-    background: linear-gradient(to bottom, #F1F5F9, #E2E8F0) !important;
-    font-weight: 700;
+    background: #F7F8FC !important;
 }
 
 .stDataFrame th {
-    color: #0F172A !important;
-    font-weight: 800 !important;
+    color: #4B5169 !important;
+    font-weight: 700 !important;
     text-transform: uppercase;
-    font-size: 11px !important;
-    letter-spacing: 0.8px;
-    border-bottom: 3px solid #CBD5E1 !important;
-    padding: 14px 12px !important;
+    font-size: 10.5px !important;
+    letter-spacing: 0.7px;
+    border-bottom: 2px solid #E2E6F0 !important;
+    padding: 12px !important;
 }
 
 .stDataFrame tbody tr:nth-child(even) {
-    background-color: #F8FAFC !important;
+    background-color: #FAFBFE !important;
 }
 
 .stDataFrame tbody tr:nth-child(odd) {
@@ -357,39 +403,90 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 }
 
 .stDataFrame tbody tr:hover {
-    background-color: #F1F5F9 !important;
+    background-color: #F0F2FA !important;
 }
 
 .stDataFrame td {
-    color: #1E293B !important;
-    font-weight: 600;
-    border-bottom: 1px solid #E2E8F0 !important;
-    padding: 12px !important;
+    color: #2D3148 !important;
+    font-weight: 500;
+    border-bottom: 1px solid #EDF0F7 !important;
+    padding: 11px 12px !important;
 }
 
-/* === BUTTONS & INPUTS === */
+/* ═══ BUTTONS & INPUTS ═══ */
 .stButton button {
-    background: #0F172A;
+    background: #4338CA;
     color: #FFFFFF;
     border-radius: 10px;
-    font-weight: 700;
+    font-weight: 600;
     border: none;
     padding: 10px 20px;
-    box-shadow: 0 2px 8px rgba(15,23,42,0.2);
+    box-shadow: 0 1px 3px rgba(67,56,202,0.3);
+    transition: all .15s;
 }
 
 .stButton button:hover {
-    background: #1E293B;
-    box-shadow: 0 4px 12px rgba(15,23,42,0.3);
+    background: #3730A3;
+    box-shadow: 0 3px 10px rgba(67,56,202,0.35);
+    transform: translateY(-1px);
 }
 
-/* === ALERT STYLING === */
+.stSelectbox [data-baseweb="select"] > div {
+    border-color: #E2E6F0;
+    border-radius: 10px;
+    background: #FFFFFF;
+}
+
+.stDateInput input {
+    border-color: #E2E6F0;
+    border-radius: 10px;
+    background: #FFFFFF;
+}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #F4F6FB;
+}
+::-webkit-scrollbar-thumb {
+    background: #CDD1E0;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #A8ADBF;
+}
+
+/* ═══ EXPANDER ═══ */
+.streamlit-expanderHeader {
+    background: #FFFFFF;
+    border: 1px solid #E5E9F2;
+    border-radius: 10px;
+    font-weight: 600;
+    color: #4B5169;
+}
+
+/* ═══ TOGGLE ═══ */
+.stToggle label span {
+    color: #5A6178 !important;
+    font-weight: 600 !important;
+}
+
+/* ═══ INFO / WARNING BOXES ═══ */
+.stAlert {
+    border-radius: 12px;
+    border-width: 1px;
+}
+
+/* ═══ ALERT BANNER ═══ */
 .alert-banner {
-    border-radius: 14px;
-    padding: 18px 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border-width: 2px;
+    border-radius: 12px;
+    padding: 16px 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    border-width: 1px;
 }
 </style>
 """
@@ -401,15 +498,28 @@ def apply_theme_css(mode: str):
 # PLOTLY THEME
 # ══════════════════════════════════════════════
 COLORS = {
-    'blue': '#3B82F6',      # Brighter blue
-    'green': '#10B981',     # Vibrant green
+    'blue': '#3B82F6',      # Bright blue
+    'green': '#10B981',     # Emerald green
     'red': '#EF4444',       # Clear red
-    'amber': '#F59E0B',     # Saturated amber
+    'amber': '#F59E0B',     # Warm amber
     'purple': '#8B5CF6',    # Rich purple
-    'cyan': '#06B6D4',      # Deep cyan
+    'cyan': '#06B6D4',      # Ocean cyan
     'pink': '#EC4899',      # Hot pink
     'orange': '#F97316',    # Vivid orange
 }
+
+# Slightly adjusted sequence for light mode readability
+COLORS_LIGHT = {
+    'blue': '#2563EB',
+    'green': '#059669',
+    'red': '#DC2626',
+    'amber': '#D97706',
+    'purple': '#7C3AED',
+    'cyan': '#0891B2',
+    'pink': '#DB2777',
+    'orange': '#EA580C',
+}
+
 COLOR_SEQ = list(COLORS.values())
 
 def apply_layout(fig, mode: str, **kwargs):
@@ -423,21 +533,30 @@ def apply_layout(fig, mode: str, **kwargs):
             colorway=COLOR_SEQ,
         )
     else:
-        # Light mode with high contrast
+        # Light mode with refined aesthetics
         base_layout = dict(
             template='plotly_white',
             paper_bgcolor='#FFFFFF',
-            plot_bgcolor='#FAFBFC',
-            font=dict(family='Inter, sans-serif', color='#1E293B', size=12),
-            margin=dict(l=20, r=20, t=40, b=20),
-            colorway=COLOR_SEQ,
+            plot_bgcolor='#FAFBFE',
+            font=dict(family='Inter, sans-serif', color='#4B5169', size=12),
+            margin=dict(l=20, r=20, t=44, b=20),
+            colorway=list(COLORS_LIGHT.values()),
+            title=dict(font=dict(size=14, color='#1A1D2E', family='Inter, sans-serif')),
             xaxis=dict(
-                gridcolor='#E2E8F0',
-                linecolor='#CBD5E1',
+                gridcolor='#EDF0F7',
+                linecolor='#E2E6F0',
+                zerolinecolor='#E2E6F0',
+                tickfont=dict(color='#6B7194', size=11),
             ),
             yaxis=dict(
-                gridcolor='#E2E8F0',
-                linecolor='#CBD5E1',
+                gridcolor='#EDF0F7',
+                linecolor='#E2E6F0',
+                zerolinecolor='#E2E6F0',
+                tickfont=dict(color='#6B7194', size=11),
+            ),
+            legend=dict(
+                font=dict(color='#4B5169', size=11),
+                bgcolor='rgba(255,255,255,0.8)',
             ),
         )
     
@@ -616,7 +735,7 @@ with tab_exec:
     st.markdown(f"""
     <div class="main-header">
         <h1>Traffic & Finance Dashboard</h1>
-        <p style="font-size:13px;color:#565B7A;margin-top:4px">
+        <p style="font-size:13px;color:{'#565B7A' if MODE == 'dark' else '#7C839E'};margin-top:4px">
             Acquisition Focus · {start_date.strftime('%b %d')} — {end_date.strftime('%b %d, %Y')}
         </p>
     </div>
@@ -740,16 +859,16 @@ with tab_exec:
         for alert in alerts:
             if alert['type'] == 'critical':
                 bg_color = '#2D0E0E' if MODE == 'dark' else '#FEF2F2'
-                border_color = '#F06A6A30' if MODE == 'dark' else '#FECACA'
-                text_color = '#F06A6A' if MODE == 'dark' else '#B42318'
+                border_color = '#F06A6A30' if MODE == 'dark' else '#FCA5A5'
+                text_color = '#F06A6A' if MODE == 'dark' else '#DC2626'
             elif alert['type'] == 'warning':
                 bg_color = '#2D1F0E' if MODE == 'dark' else '#FFFBEB'
-                border_color = '#F0B05A30' if MODE == 'dark' else '#FDE68A'
-                text_color = '#F0B05A' if MODE == 'dark' else '#D97706'
+                border_color = '#F0B05A30' if MODE == 'dark' else '#FCD34D'
+                text_color = '#F0B05A' if MODE == 'dark' else '#B45309'
             else:  # success
                 bg_color = '#0E2D20' if MODE == 'dark' else '#F0FDF4'
-                border_color = '#3DDFA030' if MODE == 'dark' else '#BBF7D0'
-                text_color = '#3DDFA0' if MODE == 'dark' else '#15803D'
+                border_color = '#3DDFA030' if MODE == 'dark' else '#86EFAC'
+                text_color = '#3DDFA0' if MODE == 'dark' else '#059669'
             
             st.markdown(f"""
             <div style="
@@ -784,7 +903,7 @@ with tab_exec:
                         </div>
                         <div style="
                             font-size: 12px;
-                            color: {'#8B90AD' if MODE == 'dark' else '#6B7280'};
+                            color: {'#8B90AD' if MODE == 'dark' else '#7C839E'};
                             font-style: italic;
                             padding-left: 12px;
                             border-left: 2px solid {border_color};
@@ -1329,13 +1448,14 @@ with tab_payments:
                 st.markdown(f"""
                 <div style="
                     background: {bg_color};
-                    border: 2px solid {alert_color};
-                    border-radius: 12px;
-                    padding: 20px 24px;
+                    border: {'2px' if MODE == 'dark' else '1px'} solid {alert_color};
+                    border-radius: 14px;
+                    padding: 22px 26px;
                     margin-bottom: 20px;
                     text-align: center;
+                    {'box-shadow: 0 1px 4px rgba(0,0,0,0.04);' if MODE == 'light' else ''}
                 ">
-                    <div style="font-size: 11px; color: #8B90AD; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                    <div style="font-size: 10.5px; color: {'#8B90AD' if MODE == 'dark' else '#7C839E'}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
                         Current Hour Approval Rate
                     </div>
                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; color: {alert_color}; margin-bottom: 8px;">
@@ -1344,7 +1464,7 @@ with tab_payments:
                     <div style="font-size: 18px; font-weight: 600; color: {alert_color}; margin-bottom: 12px;">
                         {status}
                     </div>
-                    <div style="font-size: 13px; color: #8B90AD;">
+                    <div style="font-size: 13px; color: {'#8B90AD' if MODE == 'dark' else '#7C839E'};">
                         {int(hour_attempts)} attempts · {latest_date.strftime('%Y-%m-%d %H:00')}
                     </div>
                 </div>
@@ -1521,18 +1641,20 @@ with tab_agents:
                 st.markdown(f"""
                 <div style="
                     background: {'#131730' if MODE == 'dark' else '#FFFFFF'};
-                    border: 2px solid {COLORS['green']};
-                    border-radius: 12px;
-                    padding: 20px;
+                    border: {'2px solid ' + COLORS['green'] if MODE == 'dark' else '1px solid #E5E9F2'};
+                    border-radius: 14px;
+                    padding: 22px;
                     text-align: center;
                     margin-bottom: 16px;
+                    box-shadow: {'none' if MODE == 'dark' else '0 1px 3px rgba(0,0,0,0.04)'};
+                    {'border-top: 3px solid ' + COLORS['green'] if MODE == 'light' else ''}
                 ">
                     <div style="font-size: 40px; margin-bottom: 12px;">{medal}</div>
-                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px; color: {'#E4E6F0' if MODE == 'dark' else '#111827'};">{row['agent']}</div>
+                    <div style="font-size: 17px; font-weight: 700; margin-bottom: 8px; color: {'#E4E6F0' if MODE == 'dark' else '#1A1D2E'};">{row['agent']}</div>
                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 24px; color: {COLORS['green']}; font-weight: 700; margin-bottom: 8px;">
                         {fmt_money(row['FTD_Amt'])}
                     </div>
-                    <div style="font-size: 13px; color: {'#8B90AD' if MODE == 'dark' else '#6B7280'}; margin-top: 8px;">
+                    <div style="font-size: 13px; color: {'#8B90AD' if MODE == 'dark' else '#7C839E'}; margin-top: 8px;">
                         {int(row['FTD'])} FTD · {row['Reg2FTD %']:.1%} CR
                     </div>
                 </div>
