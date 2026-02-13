@@ -150,22 +150,23 @@ LIGHT_CSS = """
 :root { color-scheme: light; }
 
 .stApp {
-    background: #FFFFFF;
+    background: #F9FAFB;
     font-family: 'Outfit', sans-serif;
     color: #111827;
 }
 
 section[data-testid="stSidebar"] {
-    background: #F6F7FB;
+    background: #FFFFFF;
     border-right: 1px solid #E5E7EB;
 }
 
 .main-header {
-    background: linear-gradient(135deg, #F6F7FB 0%, #FFFFFF 100%);
-    border: 1px solid #E5E7EB;
+    background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
+    border: 1px solid #D1D5DB;
     border-radius: 14px;
     padding: 24px 28px;
     margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .score-card {
@@ -174,6 +175,14 @@ section[data-testid="stSidebar"] {
     border-radius: 14px;
     padding: 18px 20px 16px;
     height: 100%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    transition: all .3s;
+}
+
+.score-card:hover {
+    border-color: #D1D5DB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .sc-label {
@@ -193,8 +202,8 @@ section[data-testid="stSidebar"] {
     margin-bottom: 8px;
 }
 
-.sc-compare.up { color: #0F7A52; }
-.sc-compare.down { color: #B42318; }
+.sc-compare.up { color: #059669; }
+.sc-compare.down { color: #DC2626; }
 
 .sec-label {
     font-size: 10px;
@@ -204,7 +213,7 @@ section[data-testid="stSidebar"] {
     font-weight: 800;
     margin: 24px 0 12px;
     padding-bottom: 8px;
-    border-bottom: 1px solid #E5E7EB;
+    border-bottom: 2px solid #E5E7EB;
 }
 
 div[data-testid="stMetric"] {
@@ -212,11 +221,13 @@ div[data-testid="stMetric"] {
     border: 1px solid #E5E7EB;
     border-radius: 12px;
     padding: 12px 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 div[data-testid="stMetric"] label {
     color: #6B7280 !important;
     font-size: 11px !important;
+    font-weight: 600;
 }
 
 div[data-testid="stMetric"] [data-testid="stMetricValue"] {
@@ -224,6 +235,31 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     color: #111827;
     font-size: 20px;
     font-weight: 700;
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    background: #F3F4F6;
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px;
+    color: #6B7280;
+    font-weight: 600;
+}
+
+.stTabs [aria-selected="true"] {
+    background: #FFFFFF !important;
+    color: #111827 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stDataFrame {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 </style>
 """
@@ -315,6 +351,10 @@ with st.sidebar:
     selected_platforms = st.multiselect("📱 Платформи", all_platforms, default=all_platforms)
     all_sources = sorted(df_traffic['traffic_source'].unique())
     selected_sources = st.multiselect("📡 Джерела трафіку", all_sources, default=all_sources)
+    
+    # Agent filter
+    all_agents = sorted([x for x in df_traffic['agent'].dropna().unique().tolist() if str(x).strip() != ""])
+    selected_agents = st.multiselect("👤 Агенти", all_agents, default=all_agents)
 
 apply_theme_css(st.session_state.theme_mode)
 MODE = st.session_state.theme_mode
@@ -322,19 +362,20 @@ MODE = st.session_state.theme_mode
 # ══════════════════════════════════════════════
 # FILTER DATA
 # ══════════════════════════════════════════════
-def filter_traffic(df, start, end, geos, brands, platforms, sources):
+def filter_traffic(df, start, end, geos, brands, platforms, sources, agents):
     mask = (
         (df['date'].dt.date >= start) & (df['date'].dt.date <= end) &
         (df['geo'].isin(geos)) & (df['brand'].isin(brands)) &
-        (df['platform'].isin(platforms)) & (df['traffic_source'].isin(sources))
+        (df['platform'].isin(platforms)) & (df['traffic_source'].isin(sources)) &
+        (df['agent'].isin(agents))
     )
     return df[mask].copy()
 
-df = filter_traffic(df_traffic, start_date, end_date, selected_geos, selected_brands, selected_platforms, selected_sources)
+df = filter_traffic(df_traffic, start_date, end_date, selected_geos, selected_brands, selected_platforms, selected_sources, selected_agents)
 period_days = (end_date - start_date).days + 1
 prev_start = start_date - timedelta(days=period_days)
 prev_end = start_date - timedelta(days=1)
-df_prev = filter_traffic(df_traffic, prev_start, prev_end, selected_geos, selected_brands, selected_platforms, selected_sources)
+df_prev = filter_traffic(df_traffic, prev_start, prev_end, selected_geos, selected_brands, selected_platforms, selected_sources, selected_agents)
 
 # ══════════════════════════════════════════════
 # HELPER FUNCTIONS
@@ -800,17 +841,17 @@ with tab_exec:
     # Add funnel metrics below
     funnel_cols = st.columns(6)
     funnel_stages = [
-        ("Impressions", fmt_num(total_impressions), "-"),
-        ("Clicks", fmt_num(total_clicks), fmt_pct(safe_div(total_clicks, total_impressions))),
-        ("Regs", fmt_num(total_regs), fmt_pct(safe_div(total_regs, total_clicks))),
-        ("Attempts", fmt_num(total_attempts), fmt_pct(safe_div(total_attempts, total_regs))),
-        ("Approved", fmt_num(total_approved), fmt_pct(safe_div(total_approved, total_attempts))),
+        ("Impressions", fmt_num(total_impressions), fmt_pct(safe_div(total_clicks, total_impressions))),
+        ("Clicks", fmt_num(total_clicks), fmt_pct(safe_div(total_regs, total_clicks))),
+        ("Regs", fmt_num(total_regs), fmt_pct(safe_div(total_attempts, total_regs))),
+        ("Attempts", fmt_num(total_attempts), fmt_pct(safe_div(total_approved, total_attempts))),
+        ("Approved", fmt_num(total_approved), fmt_pct(safe_div(total_ftd, total_approved))),
         ("FTD", fmt_num(total_ftd), fmt_pct(safe_div(total_ftd, total_regs))),
     ]
     
     for i, (stage, value, rate) in enumerate(funnel_stages):
         with funnel_cols[i]:
-            st.metric(stage, value, rate if rate != "-" else None)
+            st.metric(stage, value, rate)
 
 # ═══════════════════════════════════════════════════
 
@@ -1036,7 +1077,7 @@ with tab_daily:
 with tab_weekly:
     st.markdown('<div class="sec-label">Weekly Trends</div>', unsafe_allow_html=True)
     
-    df_full = filter_traffic(df_traffic, min_date, max_date, selected_geos, selected_brands, selected_platforms, selected_sources)
+    df_full = filter_traffic(df_traffic, min_date, max_date, selected_geos, selected_brands, selected_platforms, selected_sources, selected_agents)
     weekly = df_full.copy()
     weekly['week'] = weekly['date'].dt.isocalendar().week.astype(int)
     weekly['year'] = weekly['date'].dt.year
@@ -1292,7 +1333,7 @@ with tab_payments:
                 st.metric("⏳ Pending", f"{fmt_num(total_pending)}", 
                          f"{(total_pending/total*100):.1f}%" if total > 0 else "0%")
             else:
-                st.metric("⏳ Pending", "N/A")
+                st.metric("⏳ Pending", "0", "0%")
 
 # ═══════════════════════════════════════════════════
 # TAB 5: TRAFFIC & AGENT EFFICIENCY
@@ -1326,25 +1367,26 @@ with tab_agents:
         agg = agg.sort_values('FTD_Amt', ascending=False)
         
         # Top 3 Performers
+        st.markdown("### 🏆 Top Performers")
         top3_cols = st.columns(3)
-        for i, row in agg.head(3).iterrows():
-            with top3_cols[i % 3]:
-                medal = ["🥇", "🥈", "🥉"][i % 3]
+        for idx, (i, row) in enumerate(agg.head(3).iterrows()):
+            with top3_cols[idx]:
+                medal = ["🥇", "🥈", "🥉"][idx]
                 st.markdown(f"""
                 <div style="
                     background: {'#131730' if MODE == 'dark' else '#FFFFFF'};
                     border: 2px solid {COLORS['green']};
                     border-radius: 12px;
-                    padding: 16px;
+                    padding: 20px;
                     text-align: center;
                     margin-bottom: 16px;
                 ">
-                    <div style="font-size: 32px; margin-bottom: 8px;">{medal}</div>
-                    <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">{row['agent']}</div>
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 20px; color: {COLORS['green']}; font-weight: 700;">
+                    <div style="font-size: 40px; margin-bottom: 12px;">{medal}</div>
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px; color: {'#E4E6F0' if MODE == 'dark' else '#111827'};">{row['agent']}</div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 24px; color: {COLORS['green']}; font-weight: 700; margin-bottom: 8px;">
                         {fmt_money(row['FTD_Amt'])}
                     </div>
-                    <div style="font-size: 12px; color: #8B90AD; margin-top: 8px;">
+                    <div style="font-size: 13px; color: {'#8B90AD' if MODE == 'dark' else '#6B7280'}; margin-top: 8px;">
                         {int(row['FTD'])} FTD · {row['Reg2FTD %']:.1%} CR
                     </div>
                 </div>
@@ -1355,41 +1397,18 @@ with tab_agents:
         # ════════════════════════════════════════════════════════════
         st.markdown('<div class="sec-label">📊 Agent Performance Analysis</div>', unsafe_allow_html=True)
         
-        perf_col1, perf_col2 = st.columns(2)
+        # Top 10 by Revenue - full width
+        top10_rev = agg.head(10).sort_values('Net_Rev', ascending=True)
         
-        with perf_col1:
-            # Top 10 by Revenue
-            top10_rev = agg.head(10).sort_values('Net_Rev', ascending=True)
-            
-            fig_rev = go.Figure()
-            fig_rev.add_trace(go.Bar(
-                y=top10_rev['agent'], x=top10_rev['Net_Rev'],
-                orientation='h', marker_color=COLORS['green'],
-                text=top10_rev['Net_Rev'].apply(lambda x: fmt_money(x)),
-                textposition='outside',
-            ))
-            apply_layout(fig_rev, MODE, title='Top 10 Agents by Revenue')
-            st.plotly_chart(fig_rev, use_container_width=True, config={'displayModeBar': False})
-        
-        with perf_col2:
-            # Conversion Rate vs Volume (scatter)
-            fig_scatter = go.Figure()
-            fig_scatter.add_trace(go.Scatter(
-                x=agg['Regs'], y=agg['Reg2FTD %'],
-                mode='markers',
-                marker=dict(
-                    size=agg['FTD_Amt']/agg['FTD_Amt'].max()*50 + 10,
-                    color=agg['ROI'],
-                    colorscale='RdYlGn',
-                    showscale=True,
-                    colorbar=dict(title="ROI"),
-                ),
-                text=agg['agent'],
-                hovertemplate='<b>%{text}</b><br>Regs: %{x}<br>CR: %{y:.1%}<extra></extra>'
-            ))
-            apply_layout(fig_scatter, MODE, title='Agent Performance Matrix: Volume vs Conversion',
-                        yaxis_tickformat='.0%')
-            st.plotly_chart(fig_scatter, use_container_width=True, config={'displayModeBar': False})
+        fig_rev = go.Figure()
+        fig_rev.add_trace(go.Bar(
+            y=top10_rev['agent'], x=top10_rev['Net_Rev'],
+            orientation='h', marker_color=COLORS['green'],
+            text=top10_rev['Net_Rev'].apply(lambda x: fmt_money(x)),
+            textposition='outside',
+        ))
+        apply_layout(fig_rev, MODE, title='Top 10 Agents by Revenue')
+        st.plotly_chart(fig_rev, use_container_width=True, config={'displayModeBar': False})
         
         # ════════════════════════════════════════════════════════════
         # TRAFFIC SOURCE BREAKDOWN BY AGENT
