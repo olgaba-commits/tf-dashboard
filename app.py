@@ -20,424 +20,379 @@ st.set_page_config(
 # THEME TOGGLE (Light / Dark)
 # ══════════════════════════════════════════════
 if "theme_mode" not in st.session_state:
-    st.session_state.theme_mode = "light"
+    st.session_state.theme_mode = "dark"
 
 # ══════════════════════════════════════════════
 # THEME STYLES (CSS)
 # ══════════════════════════════════════════════
-# ══════════════════════════════════════════════
-# THEME CSS (v2 – token-based, light-first)
-# ══════════════════════════════════════════════
-BASE_CSS = """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
-/* ---- layout ---- */
-.block-container {
-  padding-top: 1.35rem;
-  padding-bottom: 2.25rem;
-  max-width: 1600px;
-}
-
-.stApp {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* headings + body */
-.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
-  color: var(--text) !important;
-  letter-spacing: -0.02em;
-}
-
-.stMarkdown, .stMarkdown p, .stMarkdown span, .stMarkdown li {
-  color: var(--text);
-  line-height: 1.45;
-}
-
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-/* ---- sidebar ---- */
-section[data-testid="stSidebar"]{
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-}
-section[data-testid="stSidebar"] > div:first-child { padding-top: 1.25rem; }
-section[data-testid="stSidebar"] hr { border-color: var(--border); margin: 0.75rem 0; }
-section[data-testid="stSidebar"] label {
-  color: var(--muted) !important;
-  font-weight: 600 !important;
-  font-size: 13px !important;
-}
-
-/* ---- inputs (baseweb) ---- */
-[data-baseweb="input"] input,
-.stDateInput input,
-[data-baseweb="textarea"] textarea {
-  background: var(--panel-2) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--border-strong) !important;
-  border-radius: 10px !important;
-}
-[data-baseweb="select"] > div {
-  background: var(--panel-2) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--border-strong) !important;
-  border-radius: 10px !important;
-}
-[data-baseweb="input"] input:focus,
-.stDateInput input:focus,
-[data-baseweb="textarea"] textarea:focus,
-[data-baseweb="select"] > div:focus-within {
-  box-shadow: 0 0 0 3px var(--focus) !important;
-  border-color: var(--accent) !important;
-}
-
-/* multiselect tags */
-.stMultiSelect [data-baseweb="tag"]{
-  background: var(--chip-bg) !important;
-  color: var(--chip-text) !important;
-  border: 1px solid var(--chip-border) !important;
-  border-radius: 8px !important;
-  font-weight: 600 !important;
-  font-size: 12px !important;
-}
-
-/* ---- buttons ---- */
-.stButton button{
-  background: var(--accent);
-  color: #FFFFFF;
-  border: 0;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-weight: 700;
-  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
-  box-shadow: var(--shadow-sm);
-}
-.stButton button:hover{
-  background: var(--accent-2);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-.stButton button:focus-visible{
-  outline: none;
-  box-shadow: 0 0 0 3px var(--focus), var(--shadow-md);
-}
-
-/* ---- tabs ---- */
-.stTabs [data-baseweb="tab-list"]{
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 4px;
-}
-.stTabs [data-baseweb="tab"]{
-  color: var(--muted-2);
-  font-weight: 700;
-  border-radius: 10px;
-}
-.stTabs [aria-selected="true"]{
-  background: var(--panel-2) !important;
-  color: var(--text) !important;
-  box-shadow: var(--shadow-xs);
-}
-
-/* ---- header + cards ---- */
-.main-header{
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 26px 30px;
-  margin-bottom: 22px;
-  box-shadow: var(--shadow-sm);
-}
-.main-header h1{
-  font-family: var(--font-sans);
-  font-size: 26px;
-  font-weight: 800;
-  margin: 0;
-}
-.main-header p{
-  font-size: 13.5px;
-  color: var(--muted-2) !important;
-  margin-top: 6px;
-  font-weight: 500;
-}
-
-.score-card{
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px 22px 18px;
-  height: 100%;
-  box-shadow: var(--shadow-xs);
-  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-  position: relative;
-  overflow: hidden;
-}
-.score-card:hover{
-  border-color: var(--border-strong);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-.sc-label{
-  font-size: 11px;
-  color: var(--muted-2);
-  text-transform: uppercase;
-  letter-spacing: 0.10em;
-  font-weight: 800;
-  margin-bottom: 10px;
-}
-.sc-value{
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 8px;
-  letter-spacing: -0.03em;
-}
-.sc-compare{
-  font-size: 12.5px;
-  font-weight: 800;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 8px;
-}
-.sc-compare.up{ color: var(--good); background: var(--good-bg); }
-.sc-compare.down{ color: var(--bad); background: var(--bad-bg); }
-.sc-sub{
-  font-size: 11px;
-  color: var(--muted-2);
-  margin-top: 6px;
-}
-
-/* section label */
-.sec-label{
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--muted-2);
-  font-weight: 800;
-  margin: 22px 0 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-/* st.metric */
-div[data-testid="stMetric"]{
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: var(--shadow-xs);
-}
-div[data-testid="stMetric"] label{
-  color: var(--muted-2) !important;
-  font-size: 11px !important;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-}
-div[data-testid="stMetric"] [data-testid="stMetricValue"]{
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--text);
-  font-size: 20px;
-  font-weight: 700;
-}
-
-/* ---- plotly container ---- */
-.stPlotlyChart{
-  background: var(--panel);
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-xs);
-  padding: 6px;
-}
-
-/* ---- dataframe ---- */
-.stDataFrame{
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-xs);
-}
-
-/* ---- alerts ---- */
-.stAlert{ border-radius: 12px; border-width: 1px; }
-.alert-banner{
-  border-radius: 12px;
-  padding: 16px 22px;
-  margin-bottom: 18px;
-  box-shadow: var(--shadow-xs);
-  border-width: 1px;
-}
-
-/* ---- scrollbar ---- */
-::-webkit-scrollbar{ width: 7px; height: 7px; }
-::-webkit-scrollbar-track{ background: var(--scroll-track); }
-::-webkit-scrollbar-thumb{ background: var(--scroll-thumb); border-radius: 6px; }
-::-webkit-scrollbar-thumb:hover{ background: var(--scroll-thumb-hover); }
-
-/* shadow tokens */
-:root{
-  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 10px 25px rgba(0,0,0,0.10);
-}
-</style>
-"""
-
-DARK_OVERRIDES = """
-<style>
-/* Preserve the original dark "premium" look */
-.main-header{
-  background: linear-gradient(135deg, #0C0F1A 0%, #131730 100%) !important;
-  border: 1px solid #1E2240 !important;
-}
-.main-header p{ color: #565B7A !important; }
-
-.score-card{
-  background: #131730 !important;
-  border: 1px solid #1E2240 !important;
-}
-.score-card:hover{
-  border-color: #2A2F55 !important;
-  box-shadow: 0 12px 32px rgba(0,0,0,.30) !important;
-}
-
-div[data-testid="stMetric"]{
-  background: #131730 !important;
-  border: 1px solid #1E2240 !important;
-}
-
-.sec-label{ border-bottom: 1px solid #1E2240 !important; }
-
-.stTabs [data-baseweb="tab-list"]{
-  background: #111528 !important;
-  border: 1px solid #1E2240 !important;
-  padding: 3px !important;
-}
-.stTabs [aria-selected="true"]{
-  background: #131730 !important;
-}
-
-.stPlotlyChart{
-  background: #131730 !important;
-  border: 1px solid #1E2240 !important;
-}
-</style>
-"""
-
-LIGHT_OVERRIDES = """
-<style>
-/* Higher-contrast dataframe styling (better readability) */
-.stDataFrame table{ font-size: 13px; }
-.stDataFrame thead{ background: #F3F4F6 !important; }
-.stDataFrame th{
-  color: #334155 !important;
-  font-weight: 800 !important;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 11px !important;
-  padding: 10px 12px !important;
-  border-bottom: 1px solid #E5E7EB !important;
-}
-.stDataFrame tbody tr:nth-child(even){ background-color: #FBFCFF !important; }
-.stDataFrame tbody tr:hover{ background-color: #EEF2FF !important; }
-.stDataFrame td{
-  color: #0F172A !important;
-  font-weight: 500;
-  border-bottom: 1px solid #E5E7EB !important;
-  padding: 11px 12px !important;
-}
-[data-testid="stDataFrame"] [data-testid="glideDataEditor"]{
-  border-radius: 12px;
-  overflow: hidden;
-}
-</style>
-"""
-
 DARK_CSS = """
 <style>
-:root{
-  color-scheme: dark;
-  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-  --bg: #06080F;
-  --panel: #0C0F1A;
-  --panel-2: #131730;
+:root { color-scheme: dark; }
 
-  --text: #E4E6F0;
-  --muted: #A8AECB;
-  --muted-2: #7B80A0;
+.stApp {
+    background: #06080F;
+    font-family: 'Outfit', sans-serif;
+    color: #E4E6F0;
+}
 
-  --border: #1E2240;
-  --border-strong: #2A2F55;
+section[data-testid="stSidebar"] {
+    background: #0C0F1A;
+    border-right: 1px solid #1E2240;
+}
 
-  --accent: #6366F1;
-  --accent-2: #4338CA;
-  --focus: rgba(99,102,241,0.35);
+.main-header {
+    background: linear-gradient(135deg, #0C0F1A 0%, #131730 100%);
+    border: 1px solid #1E2240;
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+}
 
-  --good: #3DDFA0;
-  --good-bg: rgba(61,223,160,0.14);
-  --bad: #F06A6A;
-  --bad-bg: rgba(240,106,106,0.16);
+.score-card {
+    background: #131730;
+    border: 1px solid #1E2240;
+    border-radius: 14px;
+    padding: 18px 20px 16px;
+    position: relative;
+    overflow: hidden;
+    transition: all .3s;
+    height: 100%;
+}
 
-  --chip-bg: rgba(99,102,241,0.16);
-  --chip-text: #DDE1FF;
-  --chip-border: rgba(99,102,241,0.30);
+.score-card:hover {
+    border-color: #2A2F55;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.3);
+}
 
-  --scroll-track: #0C0F1A;
-  --scroll-thumb: #2A2F55;
-  --scroll-thumb-hover: #3A3F66;
+.sc-label {
+    font-size: 11px;
+    color: #565B7A;
+    text-transform: uppercase;
+    letter-spacing: .9px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.sc-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 600;
+    color: #E4E6F0;
+    margin-bottom: 8px;
+}
+
+.sc-compare {
+    font-size: 12px;
+    font-weight: 600;
+}
+.sc-compare.up { color: #3DDFA0; }
+.sc-compare.down { color: #F06A6A; }
+
+.sc-sub {
+    font-size: 10px;
+    color: #565B7A;
+    margin-top: 4px;
+}
+
+.sec-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #565B7A;
+    font-weight: 700;
+    margin: 24px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1E2240;
+}
+
+div[data-testid="stMetric"] {
+    background: #131730;
+    border: 1px solid #1E2240;
+    border-radius: 12px;
+    padding: 12px 16px;
+}
+
+div[data-testid="stMetric"] label {
+    color: #565B7A !important;
+    font-size: 11px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+
+div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+    font-family: 'JetBrains Mono', monospace;
+    color: #E4E6F0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    background: #111528;
+    border-radius: 10px;
+    padding: 3px;
+}
+
+.stTabs [aria-selected="true"] {
+    background: #131730 !important;
+    color: #E4E6F0 !important;
 }
 </style>
-""" + BASE_CSS + DARK_OVERRIDES
+"""
 
 LIGHT_CSS = """
 <style>
-:root{
-  color-scheme: light;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
-  --bg: #F5F7FB;
-  --panel: #FFFFFF;
-  --panel-2: #F8FAFC;
+:root { color-scheme: light; }
 
-  --text: #0F172A;
-  --muted: #334155;
-  --muted-2: #64748B;
+.stApp {
+    background: linear-gradient(to bottom, #F8FAFC 0%, #F1F5F9 100%);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #0F172A;
+}
 
-  --border: #E5E7EB;
-  --border-strong: #D1D5DB;
+section[data-testid="stSidebar"] {
+    background: #FFFFFF;
+    border-right: 1px solid #CBD5E1;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+}
 
-  --accent: #4F46E5;
-  --accent-2: #3730A3;
-  --focus: rgba(79,70,229,0.28);
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: #0F172A;
+    font-weight: 700;
+}
 
-  --good: #047857;
-  --good-bg: #D1FAE5;
-  --bad: #DC2626;
-  --bad-bg: #FEE2E2;
+section[data-testid="stSidebar"] label {
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
 
-  --chip-bg: #EEF2FF;
-  --chip-text: #3730A3;
-  --chip-border: #C7D2FE;
+/* === HEADER === */
+.main-header {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+    border: 2px solid #CBD5E1;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
 
-  --scroll-track: #EEF2F7;
-  --scroll-thumb: #C9CDD9;
-  --scroll-thumb-hover: #A0A5B5;
+.main-header h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.8px;
+    margin: 0;
+}
+
+.main-header .subtitle {
+    font-size: 14px;
+    color: #64748B;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* === SCORECARD === */
+.score-card {
+    background: #FFFFFF;
+    border: 2px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 20px 22px 18px;
+    height: 100%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.score-card:hover {
+    border-color: #CBD5E1;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.sc-label {
+    font-size: 11px;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.sc-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0F172A;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
+}
+
+.sc-compare {
+    font-size: 13px;
+    font-weight: 700;
+}
+.sc-compare.up { color: #10B981; }
+.sc-compare.down { color: #EF4444; }
+
+.sc-sub {
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* === SECTION LABEL === */
+.sec-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: #475569;
+    font-weight: 800;
+    margin: 28px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #E2E8F0;
+}
+
+/* === METRICS === */
+div[data-testid="stMetric"] {
+    background: #FFFFFF;
+    border: 2px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    transition: all .2s;
+}
+
+div[data-testid="stMetric"]:hover {
+    border-color: #CBD5E1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+div[data-testid="stMetric"] label {
+    color: #64748B !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+}
+
+div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+    font-family: 'JetBrains Mono', monospace;
+    color: #0F172A;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* === TABS === */
+.stTabs [data-baseweb="tab-list"] {
+    background: #F1F5F9;
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+    border: 1px solid #E2E8F0;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: 10px;
+    color: #64748B;
+    font-weight: 700;
+    padding: 10px 16px;
+    font-size: 14px;
+}
+
+.stTabs [aria-selected="true"] {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #CBD5E1 !important;
+}
+
+/* === DATAFRAME === */
+.stDataFrame {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid #E2E8F0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.stDataFrame table {
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+}
+
+.stDataFrame thead {
+    background: linear-gradient(to bottom, #F1F5F9, #E2E8F0) !important;
+    font-weight: 700;
+}
+
+.stDataFrame th {
+    color: #0F172A !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    font-size: 11px !important;
+    letter-spacing: 0.8px;
+    border-bottom: 3px solid #CBD5E1 !important;
+    padding: 14px 12px !important;
+}
+
+.stDataFrame tbody tr:nth-child(even) {
+    background-color: #F8FAFC !important;
+}
+
+.stDataFrame tbody tr:nth-child(odd) {
+    background-color: #FFFFFF !important;
+}
+
+.stDataFrame tbody tr:hover {
+    background-color: #F1F5F9 !important;
+}
+
+.stDataFrame td {
+    color: #1E293B !important;
+    font-weight: 600;
+    border-bottom: 1px solid #E2E8F0 !important;
+    padding: 12px !important;
+}
+
+/* === BUTTONS & INPUTS === */
+.stButton button {
+    background: #0F172A;
+    color: #FFFFFF;
+    border-radius: 10px;
+    font-weight: 700;
+    border: none;
+    padding: 10px 20px;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.2);
+}
+
+.stButton button:hover {
+    background: #1E293B;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.3);
+}
+
+/* === ALERT STYLING === */
+.alert-banner {
+    border-radius: 14px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-width: 2px;
 }
 </style>
-""" + BASE_CSS + LIGHT_OVERRIDES
-
-
+"""
 
 def apply_theme_css(mode: str):
     st.markdown(DARK_CSS if mode == "dark" else LIGHT_CSS, unsafe_allow_html=True)
@@ -446,30 +401,16 @@ def apply_theme_css(mode: str):
 # PLOTLY THEME
 # ══════════════════════════════════════════════
 COLORS = {
-    'blue': '#3B82F6',
-    'green': '#10B981',
-    'red': '#EF4444',
-    'amber': '#F59E0B',
-    'purple': '#8B5CF6',
-    'cyan': '#06B6D4',
-    'pink': '#EC4899',
-    'orange': '#F97316',
+    'blue': '#3B82F6',      # Brighter blue
+    'green': '#10B981',     # Vibrant green
+    'red': '#EF4444',       # Clear red
+    'amber': '#F59E0B',     # Saturated amber
+    'purple': '#8B5CF6',    # Rich purple
+    'cyan': '#06B6D4',      # Deep cyan
+    'pink': '#EC4899',      # Hot pink
+    'orange': '#F97316',    # Vivid orange
 }
-
-# Deeper colors for light mode — better contrast on white
-COLORS_LIGHT = {
-    'blue': '#2563EB',
-    'green': '#059669',
-    'red': '#DC2626',
-    'amber': '#D97706',
-    'purple': '#7C3AED',
-    'cyan': '#0891B2',
-    'pink': '#DB2777',
-    'orange': '#EA580C',
-}
-
 COLOR_SEQ = list(COLORS.values())
-COLOR_SEQ_LIGHT = list(COLORS_LIGHT.values())
 
 def apply_layout(fig, mode: str, **kwargs):
     if mode == "dark":
@@ -482,29 +423,21 @@ def apply_layout(fig, mode: str, **kwargs):
             colorway=COLOR_SEQ,
         )
     else:
+        # Light mode with high contrast
         base_layout = dict(
             template='plotly_white',
             paper_bgcolor='#FFFFFF',
-            plot_bgcolor='#FAFBFF',
-            font=dict(family='Inter, sans-serif', color='#374151', size=12),
-            margin=dict(l=20, r=20, t=44, b=20),
-            colorway=COLOR_SEQ_LIGHT,
-            title=dict(font=dict(size=14, color='#111827', family='Inter, sans-serif')),
+            plot_bgcolor='#FAFBFC',
+            font=dict(family='Inter, sans-serif', color='#1E293B', size=12),
+            margin=dict(l=20, r=20, t=40, b=20),
+            colorway=COLOR_SEQ,
             xaxis=dict(
-                gridcolor='#E5E7EB',
-                linecolor='#D1D5DB',
-                zerolinecolor='#D1D5DB',
-                tickfont=dict(color='#6B7280', size=11),
+                gridcolor='#E2E8F0',
+                linecolor='#CBD5E1',
             ),
             yaxis=dict(
-                gridcolor='#E5E7EB',
-                linecolor='#D1D5DB',
-                zerolinecolor='#D1D5DB',
-                tickfont=dict(color='#6B7280', size=11),
-            ),
-            legend=dict(
-                font=dict(color='#374151', size=11),
-                bgcolor='rgba(255,255,255,0.9)',
+                gridcolor='#E2E8F0',
+                linecolor='#CBD5E1',
             ),
         )
     
@@ -623,7 +556,7 @@ def scorecard_html(label, value, change_pct, sub_text="", accent_color="#5B8DEF"
     symbol = "▲" if direction == "up" else "▼"
     return f"""
     <div class="score-card">
-        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:{accent_color}"></div>
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:{accent_color}"></div>
         <div class="sc-label">{label}</div>
         <div class="sc-value">{value}</div>
         <div class="sc-compare {direction}">{symbol} {abs(change_pct)*100:.1f}%</div>
@@ -683,7 +616,7 @@ with tab_exec:
     st.markdown(f"""
     <div class="main-header">
         <h1>Traffic & Finance Dashboard</h1>
-        <p style="font-size:13px;color:{'#7B80A0' if MODE == 'dark' else '#6B7280'};margin-top:4px">
+        <p style="font-size:13px;color:#565B7A;margin-top:4px">
             Acquisition Focus · {start_date.strftime('%b %d')} — {end_date.strftime('%b %d, %Y')}
         </p>
     </div>
@@ -807,19 +740,16 @@ with tab_exec:
         for alert in alerts:
             if alert['type'] == 'critical':
                 bg_color = '#2D0E0E' if MODE == 'dark' else '#FEF2F2'
-                border_color = '#F06A6A30' if MODE == 'dark' else '#FCA5A5'
-                text_color = '#F06A6A' if MODE == 'dark' else '#DC2626'
-                impact_bg = 'rgba(240,106,106,0.1)' if MODE == 'dark' else 'rgba(220,38,38,0.08)'
+                border_color = '#F06A6A30' if MODE == 'dark' else '#FECACA'
+                text_color = '#F06A6A' if MODE == 'dark' else '#B42318'
             elif alert['type'] == 'warning':
                 bg_color = '#2D1F0E' if MODE == 'dark' else '#FFFBEB'
-                border_color = '#F0B05A30' if MODE == 'dark' else '#FCD34D'
-                text_color = '#F0B05A' if MODE == 'dark' else '#B45309'
-                impact_bg = 'rgba(240,176,90,0.1)' if MODE == 'dark' else 'rgba(217,119,6,0.08)'
+                border_color = '#F0B05A30' if MODE == 'dark' else '#FDE68A'
+                text_color = '#F0B05A' if MODE == 'dark' else '#D97706'
             else:  # success
                 bg_color = '#0E2D20' if MODE == 'dark' else '#F0FDF4'
-                border_color = '#3DDFA030' if MODE == 'dark' else '#86EFAC'
-                text_color = '#3DDFA0' if MODE == 'dark' else '#059669'
-                impact_bg = 'rgba(61,223,160,0.1)' if MODE == 'dark' else 'rgba(5,150,105,0.08)'
+                border_color = '#3DDFA030' if MODE == 'dark' else '#BBF7D0'
+                text_color = '#3DDFA0' if MODE == 'dark' else '#15803D'
             
             st.markdown(f"""
             <div style="
@@ -837,7 +767,7 @@ with tab_exec:
                         <div style="font-weight: 700; color: {text_color}; margin-bottom: 6px; font-size: 14px;">
                             {alert['title']}
                         </div>
-                        <div style="margin-bottom: 8px; line-height: 1.5; color: {'#C0C3D4' if MODE == 'dark' else '#374151'};">
+                        <div style="margin-bottom: 8px; line-height: 1.5;">
                             {alert['message']}
                         </div>
                         <div style="
@@ -847,7 +777,7 @@ with tab_exec:
                             margin-bottom: 8px;
                             font-size: 13px;
                             padding: 8px 12px;
-                            background: {impact_bg};
+                            background: {'rgba(240,106,106,0.1)' if alert['type'] == 'critical' else 'rgba(240,176,90,0.1)' if alert['type'] == 'warning' else 'rgba(61,223,160,0.1)'};
                             border-radius: 6px;
                         ">
                             💰 {alert['impact']}
@@ -1089,8 +1019,7 @@ with tab_daily:
     today_kpi = compute_kpis(today_data)
     yesterday_kpi = compute_kpis(yesterday_data)
     
-    today_color = '#C0C3D4' if MODE == 'dark' else '#374151'
-    st.markdown(f"<span style='color:{today_color}'><b>Today ({today_date.strftime('%Y-%m-%d')})</b> vs <b>Yesterday ({yesterday_date.strftime('%Y-%m-%d')})</b></span>", unsafe_allow_html=True)
+    st.markdown(f"**Today ({today_date.strftime('%Y-%m-%d')})** vs **Yesterday ({yesterday_date.strftime('%Y-%m-%d')})**")
     
     kpi_cols = st.columns(6)
     
@@ -1397,21 +1326,16 @@ with tab_payments:
                     alert_color = COLORS['red']
                     bg_color = '#2D0E0E' if MODE == 'dark' else '#FEF2F2'
                 
-                border_w = '2px' if MODE == 'dark' else '1px'
-                shadow = '' if MODE == 'dark' else 'box-shadow: 0 1px 4px rgba(0,0,0,0.04);'
-                sub_color = '#8B90AD' if MODE == 'dark' else '#6B7280'
-                
                 st.markdown(f"""
                 <div style="
                     background: {bg_color};
-                    border: {border_w} solid {alert_color};
-                    border-radius: 14px;
-                    padding: 22px 26px;
+                    border: 2px solid {alert_color};
+                    border-radius: 12px;
+                    padding: 20px 24px;
                     margin-bottom: 20px;
                     text-align: center;
-                    {shadow}
                 ">
-                    <div style="font-size: 11px; color: {sub_color}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                    <div style="font-size: 11px; color: #8B90AD; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
                         Current Hour Approval Rate
                     </div>
                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; color: {alert_color}; margin-bottom: 8px;">
@@ -1420,7 +1344,7 @@ with tab_payments:
                     <div style="font-size: 18px; font-weight: 600; color: {alert_color}; margin-bottom: 12px;">
                         {status}
                     </div>
-                    <div style="font-size: 13px; color: {sub_color};">
+                    <div style="font-size: 13px; color: #8B90AD;">
                         {int(hour_attempts)} attempts · {latest_date.strftime('%Y-%m-%d %H:00')}
                     </div>
                 </div>
@@ -1594,29 +1518,21 @@ with tab_agents:
         for idx, (i, row) in enumerate(agg.head(3).iterrows()):
             with top3_cols[idx]:
                 medal = ["🥇", "🥈", "🥉"][idx]
-                card_bg = '#131730' if MODE == 'dark' else '#FFFFFF'
-                card_border = f'1px solid {COLORS["green"]}' if MODE == 'dark' else '1px solid #E0E4ED'
-                card_shadow = 'none' if MODE == 'dark' else '0 1px 4px rgba(0,0,0,0.05)'
-                card_top_border = f'border-top: 3px solid {COLORS["green"]};' if MODE == 'light' else ''
-                name_color = '#E4E6F0' if MODE == 'dark' else '#111827'
-                sub_color = '#8B90AD' if MODE == 'dark' else '#6B7280'
                 st.markdown(f"""
                 <div style="
-                    background: {card_bg};
-                    border: {card_border};
-                    {card_top_border}
-                    border-radius: 14px;
-                    padding: 22px;
+                    background: {'#131730' if MODE == 'dark' else '#FFFFFF'};
+                    border: 2px solid {COLORS['green']};
+                    border-radius: 12px;
+                    padding: 20px;
                     text-align: center;
                     margin-bottom: 16px;
-                    box-shadow: {card_shadow};
                 ">
                     <div style="font-size: 40px; margin-bottom: 12px;">{medal}</div>
-                    <div style="font-size: 17px; font-weight: 700; margin-bottom: 8px; color: {name_color};">{row['agent']}</div>
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px; color: {'#E4E6F0' if MODE == 'dark' else '#111827'};">{row['agent']}</div>
                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 24px; color: {COLORS['green']}; font-weight: 700; margin-bottom: 8px;">
                         {fmt_money(row['FTD_Amt'])}
                     </div>
-                    <div style="font-size: 13px; color: {sub_color}; margin-top: 8px;">
+                    <div style="font-size: 13px; color: {'#8B90AD' if MODE == 'dark' else '#6B7280'}; margin-top: 8px;">
                         {int(row['FTD'])} FTD · {row['Reg2FTD %']:.1%} CR
                     </div>
                 </div>
