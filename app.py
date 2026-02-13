@@ -6,6 +6,7 @@ from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import numpy as np
 
+from matplotlib.colors import LinearSegmentedColormap
 # ══════════════════════════════════════════════
 # CONFIG
 # ══════════════════════════════════════════════
@@ -150,13 +151,13 @@ LIGHT_CSS = """
 :root { color-scheme: light; }
 
 .stApp {
-    background: linear-gradient(to bottom, #F8FAFC 0%, #F1F5F9 100%);
+    background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 60%, #EEF2FF 100%);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #0F172A;
+    color: #334155;
 }
 
 section[data-testid="stSidebar"] {
-    background: #FFFFFF;
+    background: #F8FAFC;
     border-right: 1px solid #CBD5E1;
     box-shadow: 2px 0 8px rgba(0,0,0,0.04);
 }
@@ -164,7 +165,7 @@ section[data-testid="stSidebar"] {
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3 {
-    color: #0F172A;
+    color: #334155;
     font-weight: 700;
 }
 
@@ -172,6 +173,64 @@ section[data-testid="stSidebar"] label {
     color: #475569 !important;
     font-weight: 600 !important;
     font-size: 13px !important;
+}
+
+
+/* === INPUTS (FILTERS) === */
+section[data-testid="stSidebar"] [data-baseweb="select"] > div,
+section[data-testid="stSidebar"] [data-baseweb="input"] > div,
+section[data-testid="stSidebar"] [data-baseweb="datepicker"] > div {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.06);
+}
+
+section[data-testid="stSidebar"] [data-baseweb="select"] > div:hover,
+section[data-testid="stSidebar"] [data-baseweb="input"] > div:hover,
+section[data-testid="stSidebar"] [data-baseweb="datepicker"] > div:hover {
+    border-color: #94A3B8 !important;
+}
+
+section[data-testid="stSidebar"] input {
+    border-radius: 8px !important;
+}
+
+/* Dropdown menu */
+div[data-baseweb="menu"] {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 14px 30px rgba(15,23,42,0.12);
+    overflow: hidden;
+}
+
+div[data-baseweb="option"] {
+    color: #0F172A !important;
+    font-weight: 600;
+}
+
+div[data-baseweb="option"]:hover {
+    background: #F1F5F9 !important;
+}
+
+/* Multiselect tags (chips) */
+.stMultiSelect [data-baseweb="tag"] {
+    background: #E0F2FE !important;
+    border: 1px solid #BAE6FD !important;
+    color: #075985 !important;
+    border-radius: 999px !important;
+    font-weight: 700;
+}
+
+.stMultiSelect [data-baseweb="tag"] span,
+.stMultiSelect [data-baseweb="tag"] svg {
+    color: #075985 !important;
+}
+
+/* DataFrame footer / toolbar (avoid dark leftovers) */
+div[data-testid="stDataFrame"] {
+    background: #FFFFFF !important;
 }
 
 /* === HEADER === */
@@ -188,7 +247,7 @@ section[data-testid="stSidebar"] label {
     font-family: 'Inter', sans-serif;
     font-size: 28px;
     font-weight: 800;
-    color: #0F172A;
+    color: #334155;
     letter-spacing: -0.8px;
     margin: 0;
 }
@@ -230,7 +289,7 @@ section[data-testid="stSidebar"] label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 28px;
     font-weight: 800;
-    color: #0F172A;
+    color: #334155;
     margin-bottom: 10px;
     letter-spacing: -1px;
 }
@@ -239,8 +298,8 @@ section[data-testid="stSidebar"] label {
     font-size: 13px;
     font-weight: 700;
 }
-.sc-compare.up { color: #10B981; }
-.sc-compare.down { color: #EF4444; }
+.sc-compare.up { color: #0F766E; }
+.sc-compare.down { color: #B91C1C; }
 
 .sc-sub {
     font-size: 11px;
@@ -286,7 +345,7 @@ div[data-testid="stMetric"] label {
 
 div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     font-family: 'JetBrains Mono', monospace;
-    color: #0F172A;
+    color: #334155;
     font-size: 22px;
     font-weight: 800;
 }
@@ -369,7 +428,7 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 
 /* === BUTTONS & INPUTS === */
 .stButton button {
-    background: #0F172A;
+    background: #2563EB;
     color: #FFFFFF;
     border-radius: 10px;
     font-weight: 700;
@@ -379,7 +438,7 @@ div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
 }
 
 .stButton button:hover {
-    background: #1E293B;
+    background: #1D4ED8;
     box-shadow: 0 4px 12px rgba(15,23,42,0.3);
 }
 
@@ -400,18 +459,32 @@ def apply_theme_css(mode: str):
 # ══════════════════════════════════════════════
 # PLOTLY THEME
 # ══════════════════════════════════════════════
-COLORS = {
-    'blue': '#3B82F6',      # Brighter blue
-    'green': '#10B981',     # Vibrant green
+COLORS_DARK = {
+    'blue': '#3B82F6',      # Bright blue
+    'green': '#10B981',     # Emerald (dark mode)
     'red': '#EF4444',       # Clear red
-    'amber': '#F59E0B',     # Saturated amber
-    'purple': '#8B5CF6',    # Rich purple
-    'cyan': '#06B6D4',      # Deep cyan
-    'pink': '#EC4899',      # Hot pink
-    'orange': '#F97316',    # Vivid orange
+    'amber': '#F59E0B',     # Amber
+    'purple': '#8B5CF6',    # Purple
+    'cyan': '#06B6D4',      # Cyan
+    'pink': '#EC4899',      # Pink
+    'orange': '#F97316',    # Orange
 }
-COLOR_SEQ = list(COLORS.values())
 
+# Light-mode palette: a bit softer (teal/emerald), less aggressive reds/ambers
+COLORS_LIGHT = {
+    'blue': '#2563EB',      # Brand-ish blue
+    'green': '#14B8A6',     # Teal (softer than vivid green)
+    'red': '#F87171',       # Soft red
+    'amber': '#FBBF24',     # Soft amber
+    'purple': '#7C3AED',    # Slightly deeper purple for contrast
+    'cyan': '#22D3EE',      # Soft cyan
+    'pink': '#DB2777',
+    'orange': '#FB923C',
+}
+
+# NOTE: COLORS / COLOR_SEQ are bound AFTER MODE is known (see below)
+COLORS = COLORS_DARK
+COLOR_SEQ = list(COLORS.values())
 def apply_layout(fig, mode: str, **kwargs):
     if mode == "dark":
         base_layout = dict(
@@ -423,24 +496,48 @@ def apply_layout(fig, mode: str, **kwargs):
             colorway=COLOR_SEQ,
         )
     else:
-        # Light mode with high contrast
+        # Light mode: airy SaaS style (soft grid, higher readability)
         base_layout = dict(
             template='plotly_white',
             paper_bgcolor='#FFFFFF',
-            plot_bgcolor='#FAFBFC',
-            font=dict(family='Inter, sans-serif', color='#1E293B', size=12),
-            margin=dict(l=20, r=20, t=40, b=20),
+            plot_bgcolor='#FFFFFF',
+            font=dict(family='Inter, sans-serif', color='#334155', size=12),
+            title_font=dict(family='Inter, sans-serif', color='#334155', size=16),
+            margin=dict(l=20, r=20, t=48, b=24),
             colorway=COLOR_SEQ,
+            hoverlabel=dict(
+                bgcolor='#FFFFFF',
+                bordercolor='rgba(148,163,184,0.35)',
+                font=dict(color='#0F172A', family='Inter, sans-serif', size=12),
+            ),
             xaxis=dict(
-                gridcolor='#E2E8F0',
-                linecolor='#CBD5E1',
+                showgrid=True,
+                gridcolor='rgba(148,163,184,0.18)',
+                griddash='dot',
+                gridwidth=1,
+                zeroline=False,
+                showline=False,
+                tickfont=dict(color='#64748B'),
+                title_font=dict(color='#334155'),
             ),
             yaxis=dict(
-                gridcolor='#E2E8F0',
-                linecolor='#CBD5E1',
+                showgrid=True,
+                gridcolor='rgba(148,163,184,0.18)',
+                griddash='dot',
+                gridwidth=1,
+                zeroline=False,
+                showline=False,
+                tickfont=dict(color='#64748B'),
+                title_font=dict(color='#334155'),
+            ),
+            legend=dict(
+                bgcolor='rgba(255,255,255,0.75)',
+                bordercolor='rgba(148,163,184,0.25)',
+                borderwidth=1,
+                font=dict(color='#475569'),
             ),
         )
-    
+
     # Merge with kwargs
     base_layout.update(kwargs)
     fig.update_layout(**base_layout)
@@ -504,6 +601,18 @@ with st.sidebar:
 
 apply_theme_css(st.session_state.theme_mode)
 MODE = st.session_state.theme_mode
+
+# Bind theme-specific palettes (keeps dark mode unchanged)
+COLORS = COLORS_DARK if MODE == "dark" else COLORS_LIGHT
+COLOR_SEQ = list(COLORS.values())
+
+# Softer heatmap for light mode (less aggressive, text remains readable)
+HEATMAP_CMAP_LIGHT = LinearSegmentedColormap.from_list(
+    "pastel_rdygn",
+    ["#FEECEC", "#FFF7ED", "#ECFDF5"],  # soft red -> amber -> green
+)
+HEATMAP_CMAP = HEATMAP_CMAP_LIGHT if MODE == "light" else "RdYlGn"
+
 
 # ══════════════════════════════════════════════
 # FILTER DATA
@@ -903,7 +1012,7 @@ with tab_exec:
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep %': '{:.1f}%',
             'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1f}%', 
             'Net Rev $': '${:,.0f}', 'eCPA $': '${:.0f}'
-        }).background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25),
+        }).background_gradient(subset=['Reg2Dep %'], cmap=HEATMAP_CMAP, vmin=0, vmax=25),
         use_container_width=True, hide_index=True,
     )
     
@@ -1212,8 +1321,8 @@ with tab_daily:
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}',
             'Reg2Dep %': '{:.1f}%', 'FTD Amt $': '${:,.0f}', 
             'Approval %': '{:.1f}%', 'Net Rev $': '${:,.0f}'
-        }).background_gradient(subset=['Reg2Dep %'], cmap='RdYlGn', vmin=0, vmax=25)
-         .background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=50, vmax=95),
+        }).background_gradient(subset=['Reg2Dep %'], cmap=HEATMAP_CMAP, vmin=0, vmax=25)
+         .background_gradient(subset=['Approval %'], cmap=HEATMAP_CMAP, vmin=50, vmax=95),
         use_container_width=True, hide_index=True, height=500,
     )
 
@@ -1279,9 +1388,9 @@ with tab_weekly:
             'Regs': '{:,.0f}', 'FTD': '{:,.0f}', 'Reg2Dep': '{:.1%}',
             'FTD Amt $': '${:,.0f}', 'Approval %': '{:.1%}',
             'Net Rev $': '${:,.0f}', 'eCPA $': '${:.0f}', 'ROI': '{:.1%}'
-        }).background_gradient(subset=['Reg2Dep'], cmap='RdYlGn', vmin=0, vmax=0.25)
-         .background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=0.5, vmax=0.95)
-         .background_gradient(subset=['ROI'], cmap='RdYlGn', vmin=-0.5, vmax=0.5),
+        }).background_gradient(subset=['Reg2Dep'], cmap=HEATMAP_CMAP, vmin=0, vmax=0.25)
+         .background_gradient(subset=['Approval %'], cmap=HEATMAP_CMAP, vmin=0.5, vmax=0.95)
+         .background_gradient(subset=['ROI'], cmap=HEATMAP_CMAP, vmin=-0.5, vmax=0.5),
         use_container_width=True, hide_index=True, height=500,
     )
 
@@ -1585,9 +1694,9 @@ with tab_agents:
                 'Clicks':'{:,.0f}','Regs':'{:,.0f}','FTD':'{:,.0f}',
                 'Click2Reg %':'{:.1%}','Reg2FTD %':'{:.1%}','Approval %':'{:.1%}',
                 'FTD_Amt':'${:,.0f}','Net_Rev':'${:,.0f}','eCPA':'${:,.0f}','ROI':'{:.1%}'
-            }).background_gradient(subset=['Reg2FTD %'], cmap='RdYlGn', vmin=0, vmax=0.20)
-             .background_gradient(subset=['ROI'], cmap='RdYlGn', vmin=-0.5, vmax=0.5)
-             .background_gradient(subset=['Approval %'], cmap='RdYlGn', vmin=0.6, vmax=0.95),
+            }).background_gradient(subset=['Reg2FTD %'], cmap=HEATMAP_CMAP, vmin=0, vmax=0.20)
+             .background_gradient(subset=['ROI'], cmap=HEATMAP_CMAP, vmin=-0.5, vmax=0.5)
+             .background_gradient(subset=['Approval %'], cmap=HEATMAP_CMAP, vmin=0.6, vmax=0.95),
             use_container_width=True, hide_index=True, height=500
         )
         
